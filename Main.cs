@@ -28,7 +28,6 @@ namespace Flow.Launcher.Plugin.ClipboardHistory {
         }
         
         public List<Result> Query(Query query) {
-            
             IEnumerable<ClipboardData> displayData;
             if (query.Search.Trim().Length == 0) {
                 displayData = dataList;
