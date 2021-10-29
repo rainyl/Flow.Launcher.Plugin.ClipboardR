@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 using WindowsInput;
 using WindowsInput.Native;
 
-namespace Flow.Launcher.Plugin.ClipboardHistory
-{
-    public class ClipboardHistory : IPlugin, IDisposable
-    {
+namespace Flow.Launcher.Plugin.ClipboardHistory {
+
+    public class ClipboardHistory : IPlugin, IDisposable {
+
         private const int MaxDataCount = 1000;
         private readonly InputSimulator inputSimulator = new InputSimulator();
         private PluginInitContext context;
@@ -27,30 +27,24 @@ namespace Flow.Launcher.Plugin.ClipboardHistory
             public override int GetHashCode() => text.GetHashCode();
         }
         
-        public List<Result> Query(Query query)
-        {
-            var results = new List<Result>();
+        public List<Result> Query(Query query) {
+            
             IEnumerable<ClipboardData> displayData;
-
-            if (query.Search.Trim().Length == 0)
-            {
+            if (query.Search.Trim().Length == 0) {
                 displayData = dataList;
-            }
-            else
-            {
+            } else {
                 displayData = dataList.Where(i => i.text.ToLower().Contains(query.Search.ToLower()));
             }
 
-            results.AddRange(displayData.Select(o => new Result
-            {
+            var results = new List<Result>();
+            results.AddRange(displayData.Select(o => new Result {
                 Title = o.displayText,
                 IcoPath = "Images\\clipboard.png",
                 Score = o.score,
-                Action = c =>
-                {
-                    if (!ClipboardMonitor.ClipboardWrapper.SetDataObject(o.data))
+                Action = c => {
+                    if (!ClipboardMonitor.ClipboardWrapper.SetDataObject(o.data)) {
                         return false;
-
+                    }
                     Task.Delay(50).ContinueWith(t => inputSimulator.Keyboard.ModifiedKeyStroke(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_V));
                     return true;
                 }
@@ -58,22 +52,20 @@ namespace Flow.Launcher.Plugin.ClipboardHistory
             return results;
         }
 
-        public void Init(PluginInitContext context)
-        {
+        public void Init(PluginInitContext context) {
             this.context = context;
             ClipboardMonitor.OnClipboardChange += ClipboardMonitor_OnClipboardChange;
             ClipboardMonitor.Start();
         }
 
-        void ClipboardMonitor_OnClipboardChange(ClipboardFormat format, object data)
-        {
+        void ClipboardMonitor_OnClipboardChange(ClipboardFormat format, object data) {
+
             if (format == ClipboardFormat.Html ||
                 format == ClipboardFormat.SymbolicLink ||
                 format == ClipboardFormat.Text ||
-                format == ClipboardFormat.UnicodeText)
-            {
-                if (data != null && !string.IsNullOrEmpty(data.ToString().Trim()))
-                {
+                format == ClipboardFormat.UnicodeText) {
+
+                if (data != null && !string.IsNullOrEmpty(data.ToString().Trim())) {
                     ClipboardData obj = new ClipboardData { };
                     obj.data = data;
                     obj.text = data.ToString();
@@ -81,14 +73,12 @@ namespace Flow.Launcher.Plugin.ClipboardHistory
                     obj.score = currentScore++ * 1000;
 
                     LinkedListNode<ClipboardData> node = dataList.Find(obj);
-                    if (node != null)
-                    {
+                    if (node != null) {
                         dataList.Remove(node);
                     }
                     dataList.AddFirst(obj);
 
-                    if (dataList.Count > MaxDataCount)
-                    {
+                    if (dataList.Count > MaxDataCount) {
                         dataList.RemoveLast();
                     }
                 }

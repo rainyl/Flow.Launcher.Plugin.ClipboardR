@@ -3,25 +3,22 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace Flow.Launcher.Plugin.ClipboardHistory
-{
-    public static class ClipboardMonitor
-    {
+namespace Flow.Launcher.Plugin.ClipboardHistory {
+    public static class ClipboardMonitor {
+
         public delegate void OnClipboardChangeEventHandler(ClipboardFormat format, object data);
         public static event OnClipboardChangeEventHandler OnClipboardChange;
 
-        public static void Start()
-        {
+        public static void Start() {
             ClipboardWatcher.Start();
-            ClipboardWatcher.OnClipboardChange += (ClipboardFormat format, object data) =>
-            {
-                if (OnClipboardChange != null)
+            ClipboardWatcher.OnClipboardChange += (ClipboardFormat format, object data) => {
+                if (OnClipboardChange != null) {
                     OnClipboardChange(format, data);
+                }
             };
         }
 
-        public static void Stop()
-        {
+        public static void Stop() {
             OnClipboardChange = null;
             ClipboardWatcher.Stop();
         }
@@ -54,142 +51,127 @@ namespace Flow.Launcher.Plugin.ClipboardHistory
                     return true;
                 });
             }
-
-            public static bool SetText(string text) {
-                return LoopCall(() => {
-                    System.Windows.Forms.Clipboard.SetText(text);
-                    return true;
-                });
-            }
         }
 
-        class ClipboardWatcher : Form
-        {
+        class ClipboardWatcher : Form {
             // static instance of this form
-            private static ClipboardWatcher mInstance;
-            private static Thread mThread;
-
-            // needed to dispose this form
-            static IntPtr nextClipboardViewer;
+            private static ClipboardWatcher instance;
+            private static Thread thread;
+            private static bool running = false;
 
             public delegate void OnClipboardChangeEventHandler(ClipboardFormat format, object data);
             public static event OnClipboardChangeEventHandler OnClipboardChange;
 
             // start listening
-            public static void Start()
-            {
+            public static void Start() {
                 // we can only have one instance if this class
-                if (mInstance != null)
+                if (running) {
                     return;
-
-                mThread = new Thread(new ParameterizedThreadStart(x =>
-                {
-                    Application.Run(new ClipboardWatcher());
+                }
+                running = true;
+                thread = new Thread(new ParameterizedThreadStart(x => {
+                    while (running) {
+                        instance = new ClipboardWatcher();
+                        Application.Run(instance);
+                    }
                 }));
-                mThread.SetApartmentState(ApartmentState.STA); // give the [STAThread] attribute
-                mThread.IsBackground = true;
-                mThread.Start();
+                thread.SetApartmentState(ApartmentState.STA); // give the [STAThread] attribute
+                thread.IsBackground = true;
+                thread.Start();
             }
 
             // stop listening (dispose form)
-            public static void Stop()
-            {
-                if (mInstance == null)
+            public static void Stop() {
+                if (!running) {
                     return;
-
-                mInstance.Invoke(new MethodInvoker(() =>
-                {
-                    ChangeClipboardChain(mInstance.Handle, nextClipboardViewer);
-                }));
-                mInstance.Invoke(new MethodInvoker(mInstance.Close));
-                mInstance.Dispose();
-                mInstance = null;
-
-                mThread.Join();
-                mThread = null;
+                }
+                running = false;
+                if (instance != null) {
+                    instance.Invoke(new MethodInvoker(instance.Close));
+                    instance.Dispose();
+                    instance = null;
+                }
+                if (thread != null) {
+                    thread.Join();
+                    thread = null;
+                }
             }
 
-            // on load: (hide this window)
-            protected override void SetVisibleCore(bool value)
-            {
-                CreateHandle();
-
-                mInstance = this;
-
-                nextClipboardViewer = SetClipboardViewer(mInstance.Handle);
-
-                base.SetVisibleCore(false);
+            private ClipboardWatcher() {
+                this.ShowInTaskbar = false;
             }
 
-            [DllImport("User32.dll", CharSet = CharSet.Auto)]
-            public static extern IntPtr SetClipboardViewer(IntPtr hWndNewViewer);
+            const int WM_CLIPBOARDUPDATE = 0x031D;
+            static IntPtr HWND_MESSAGE = new IntPtr(-3);
 
-            [DllImport("User32.dll", CharSet = CharSet.Auto)]
-            public static extern bool ChangeClipboardChain(IntPtr hWndRemove, IntPtr hWndNewNext);
+            [DllImport("user32.dll", SetLastError = true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            static extern bool AddClipboardFormatListener(IntPtr hwnd);
 
-            [DllImport("user32.dll", CharSet = CharSet.Auto)]
-            public static extern int SendMessage(IntPtr hwnd, int wMsg, IntPtr wParam, IntPtr lParam);
+            [DllImport("user32.dll", SetLastError = true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            static extern bool RemoveClipboardFormatListener(IntPtr hwnd);
 
-            // defined in winuser.h
-            const int WM_DRAWCLIPBOARD = 0x308;
-            const int WM_CHANGECBCHAIN = 0x030D;
+            [DllImport("user32.dll", SetLastError = true)]
+            static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
+
+            protected override void OnHandleCreated(EventArgs e) {
+                base.OnHandleCreated(e);
+                try {
+                    SetParent(this.Handle, HWND_MESSAGE);
+                    AddClipboardFormatListener(this.Handle);
+                } catch {
+                }
+            }
+
+            protected override void OnHandleDestroyed(EventArgs e) {
+                try {
+                    RemoveClipboardFormatListener(this.Handle);
+                } catch {
+                }
+                base.OnHandleDestroyed(e);
+            }
 
             protected override void WndProc(ref Message m)
             {
-                switch (m.Msg)
-                {
-                    case WM_DRAWCLIPBOARD:
-                        ClipChanged();
-                        SendMessage(nextClipboardViewer, m.Msg, m.WParam, m.LParam);
-                        break;
-
-                    case WM_CHANGECBCHAIN:
-                        if (m.WParam == nextClipboardViewer)
-                            nextClipboardViewer = m.LParam;
-                        else
-                            SendMessage(nextClipboardViewer, m.Msg, m.WParam, m.LParam);
-                        break;
-
-                    default:
-                        base.WndProc(ref m);
-                        break;
+                if (m.Msg == WM_CLIPBOARDUPDATE) {
+                    ClipChanged();
                 }
+                base.WndProc(ref m);
             }
+
 
             static readonly string[] formats = Enum.GetNames(typeof(ClipboardFormat));
 
             private void ClipChanged()
             {
                 IDataObject iData = ClipboardWrapper.GetDataObject();
-                if (iData == null)
+                if (iData == null) {
                     return;
+                }
 
                 ClipboardFormat? format = null;
-
-                foreach (var f in formats)
-                {
-                    if (iData.GetDataPresent(f))
-                    {
+                foreach (var f in formats) {
+                    if (iData.GetDataPresent(f)) {
                         format = (ClipboardFormat)Enum.Parse(typeof(ClipboardFormat), f);
                         break;
                     }
                 }
 
                 object data = iData.GetData(format.ToString());
-
-                if (data == null || format == null)
+                if (data == null || format == null) {
                     return;
+                }
 
-                if (OnClipboardChange != null)
+                if (OnClipboardChange != null) {
                     OnClipboardChange((ClipboardFormat)format, data);
+                }
             }
-
 
         }
     }
 
-    public enum ClipboardFormat : byte
-    {
+    public enum ClipboardFormat : byte {
         /// <summary>Specifies the standard ANSI text format. This static field is read-only.
         /// </summary>
         /// <filterpriority>1</filterpriority>
