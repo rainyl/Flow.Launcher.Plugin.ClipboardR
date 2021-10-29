@@ -132,8 +132,7 @@ namespace Flow.Launcher.Plugin.ClipboardHistory {
                 base.OnHandleDestroyed(e);
             }
 
-            protected override void WndProc(ref Message m)
-            {
+            protected override void WndProc(ref Message m) {
                 if (m.Msg == WM_CLIPBOARDUPDATE) {
                     ClipChanged();
                 }
@@ -143,13 +142,11 @@ namespace Flow.Launcher.Plugin.ClipboardHistory {
 
             static readonly string[] formats = Enum.GetNames(typeof(ClipboardFormat));
 
-            private void ClipChanged()
-            {
+            private void ClipChanged() {
                 IDataObject iData = ClipboardWrapper.GetDataObject();
                 if (iData == null) {
                     return;
                 }
-
                 ClipboardFormat? format = null;
                 foreach (var f in formats) {
                     if (iData.GetDataPresent(f)) {
@@ -157,17 +154,14 @@ namespace Flow.Launcher.Plugin.ClipboardHistory {
                         break;
                     }
                 }
-
                 object data = iData.GetData(format.ToString());
                 if (data == null || format == null) {
                     return;
                 }
-
                 if (OnClipboardChange != null) {
                     OnClipboardChange((ClipboardFormat)format, data);
                 }
             }
-
         }
     }
 

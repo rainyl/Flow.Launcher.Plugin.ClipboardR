@@ -59,7 +59,6 @@ namespace Flow.Launcher.Plugin.ClipboardHistory {
         }
 
         void ClipboardMonitor_OnClipboardChange(ClipboardFormat format, object data) {
-
             if (format == ClipboardFormat.Html ||
                 format == ClipboardFormat.SymbolicLink ||
                 format == ClipboardFormat.Text ||
@@ -77,7 +76,6 @@ namespace Flow.Launcher.Plugin.ClipboardHistory {
                         dataList.Remove(node);
                     }
                     dataList.AddFirst(obj);
-
                     if (dataList.Count > MaxDataCount) {
                         dataList.RemoveLast();
                     }
