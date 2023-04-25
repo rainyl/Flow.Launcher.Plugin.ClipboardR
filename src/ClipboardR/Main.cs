@@ -27,6 +27,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
     private static Random _random = new();
     private Settings _settings = null!;
     private string _settingsPath = null!;
+    private int CurrentScore { get; set; } = 0;
 
     // private readonly InputSimulator inputSimulator = new InputSimulator();
     private PluginInitContext? _context;
@@ -91,6 +92,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
             {
                 // _context!.API.ShowMsg("Wow");
                 CopyToClipboard(o);
+                // Due to the focus will change when open FlowLauncher, this won't work for now
                 new InputSimulator().Keyboard
                     .ModifiedKeyStroke(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_V);
                 return true;
@@ -101,6 +103,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 
     private void _OnClipboardChange(object? sender, SharpClipboard.ClipboardChangedEventArgs e)
     {
+        if (e.Content is null) return;
         ClipboardData clipboardData = new ClipboardData
         {
             Text = "",
@@ -110,7 +113,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
             IconPath = _defaultIconPath,
             Icon = new BitmapImage(new Uri(_defaultIconPath, UriKind.RelativeOrAbsolute)),
             PreviewImagePath = _defaultIconPath,
-            Score = _dataList.Count,
+            Score = CurrentScore++,
         };
         switch (e.ContentType)
         {
