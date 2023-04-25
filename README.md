@@ -1,12 +1,31 @@
-# Flow Launcher Clipboard History Plugin
-Ported from https://github.com/Wox-launcher/Wox.Plugin.ClipboardManager
+# Flow Launcher Clipboard Plugin
+
+The Clipboard plugin for [Flow.Launcher](https://github.com/Flow-Launcher/Flow.Launcher)
+
+Give me a star :star: is you like this project~
+
+![images/preview.gif](images/preview.gif)
 
 ## About
-At the moment it's just a plain port of the original Plugin with a tiny bit of changes.
-If you have any suggestions to make it a better plugin feel free to open an issue.
+
+This Project is developed on the shoulders of giant:
+
+Original Repo: https://github.com/Wox-launcher/Wox.Plugin.ClipboardManager
+
+Ported to Flow.Launcher: https://github.com/liberize/Flow.Launcher.Plugin.ClipboardHistory
 
 ## Installation
-Just place the contents of the Release zip in your %appdata%/FlowLauncher/Plugins folder and restart FlowLauncher.
 
-## Keyword
-cb (stands for ClipBoard)
+1. Downlaod zip file from [Release](https://github.com/rainyl/Flow.Launcher.Plugin.ClipboardR/releases)
+
+2. Place the contents of the Release zip in your %appdata%/FlowLauncher/Plugins folder and **restart**  FlowLauncher.
+
+## Usage
+
+The default keyword is `cc`, you can chenge it in the FlowLauncher settings.
+
+Click `Copy` to copy the current data to clipboard, Click `Delete` to delete the record.
+
+If you want to save images in your clipboard, open the `CacheImages` option in settings.
+
+![settings](./images/settings.png)

@@ -1,0 +1,22 @@
+<UserControl x:Class="ClipboardR.Panels.SettingsPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:ClipboardR.Panels"
+             mc:Ignorable="d"
+             d:DesignHeight="120" d:DesignWidth="400"
+             DataContext="{Binding RelativeSource={RelativeSource Self}}"
+             >
+    <Grid Height="100" Margin="0,10,0,10" Width="NaN">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="43*" />
+            <RowDefinition Height="43*" />
+        </Grid.RowDefinitions>
+        <CheckBox Grid.Row="0" Content="Cache Images" IsChecked="{Binding settings.CacheImages}"
+                  HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" />
+        <Label Grid.Row="1" Content="Restart FlowLauncher to apply" HorizontalAlignment="Center" Margin="0,4,0,0"
+               VerticalAlignment="Center" FontSize="18" />
+
+    </Grid>
+</UserControl>
