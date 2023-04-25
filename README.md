@@ -4,7 +4,7 @@ The Clipboard plugin for [Flow.Launcher](https://github.com/Flow-Launcher/Flow.L
 
 Give me a star :star: is you like this project~
 
-![images/preview.gif](images/preview.gif)
+![images/preview.gif](https://raw.githubusercontent.com/rainyl/Flow.Launcher.Plugin.ClipboardR/master/Images/preview.gif)
 
 ## About
 
@@ -28,4 +28,4 @@ Click `Copy` to copy the current data to clipboard, Click `Delete` to delete the
 
 If you want to save images in your clipboard, open the `CacheImages` option in settings.
 
-![settings](./images/settings.png)
+![settings](https://raw.githubusercontent.com/rainyl/Flow.Launcher.Plugin.ClipboardR/master/Images/settings.png)
