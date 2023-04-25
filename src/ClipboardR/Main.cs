@@ -70,7 +70,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
         results.AddRange(displayData.Select(o => new Result
         {
             Title = o.DisplayTitle,
-            SubTitle = $"{o.Score}",
+            SubTitle = o.SenderApp,
             // IcoPath = o.IconPath,
             Icon = () => o.Icon,
             CopyText = o.Text,
