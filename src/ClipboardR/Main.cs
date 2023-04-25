@@ -63,13 +63,14 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
     {
         var displayData = query.Search.Trim().Length == 0
             ? _dataList
-            : _dataList.Where(i => !string.IsNullOrEmpty(i.Text) && i.Text.ToLower().Contains(query.Search.Trim().ToLower()));
+            : _dataList.Where(i =>
+                !string.IsNullOrEmpty(i.Text) && i.Text.ToLower().Contains(query.Search.Trim().ToLower()));
 
         var results = new List<Result>();
         results.AddRange(displayData.Select(o => new Result
         {
             Title = o.DisplayTitle,
-            SubTitle = o.SenderApp,
+            SubTitle = $"{o.Score}",
             // IcoPath = o.IconPath,
             Icon = () => o.Icon,
             CopyText = o.Text,
@@ -113,7 +114,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
             IconPath = _defaultIconPath,
             Icon = new BitmapImage(new Uri(_defaultIconPath, UriKind.RelativeOrAbsolute)),
             PreviewImagePath = _defaultIconPath,
-            Score = CurrentScore++,
+            Score = CurrentScore,
         };
         switch (e.ContentType)
         {
@@ -151,11 +152,13 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                 ? clipboardData.Text[..MaxTitleLength].Trim() + "..."
                 : clipboardData.Text;
 
+        // make sure no repeat
+        if (_dataList.Any(node => node.Equals(clipboardData)))
+            return;
         _dataList.AddFirst(clipboardData);
         if (_dataList.Count > MaxDataCount)
-        {
             _dataList.RemoveLast();
-        }
+        CurrentScore++;
     }
 
     private string? SaveImageCache(ClipboardData clipboardData)
