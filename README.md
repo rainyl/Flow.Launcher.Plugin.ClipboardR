@@ -29,3 +29,7 @@ Click `Copy` to copy the current data to clipboard, Click `Delete` to delete the
 If you want to save images in your clipboard, open the `CacheImages` option in settings.
 
 ![settings](https://raw.githubusercontent.com/rainyl/Flow.Launcher.Plugin.ClipboardR/master/Images/settings.png)
+
+## License
+
+[Apache License V2.0](LICENSE)

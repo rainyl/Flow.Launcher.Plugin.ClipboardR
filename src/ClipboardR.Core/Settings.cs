@@ -6,7 +6,7 @@ public class Settings
 {
     public string ConfigFile = null!;
 
-    public bool CacheImages { get; set; } = true;
+    public bool CacheImages { get; set; } = false;
 
     public void Save()
     {
