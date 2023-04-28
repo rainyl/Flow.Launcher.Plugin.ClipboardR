@@ -14,6 +14,7 @@ public struct ClipboardData : IEquatable<ClipboardData>
     public string PreviewImagePath;
     public SharpClipboard.ContentTypes Type;
     public int Score;
+    public DateTime Time;
 
     public bool Equals(ClipboardData b)
     {
@@ -22,8 +23,8 @@ public struct ClipboardData : IEquatable<ClipboardData>
 
     public override int GetHashCode()
     {
-        var hashcode = (Text?.GetHashCode() ?? 0) ^ (DisplayTitle?.GetHashCode() ?? 0) ^ (Data?.GetHashCode() ?? 0) ^
-                       (SenderApp?.GetHashCode() ?? 0) ^ Type.GetHashCode();
+        var hashcode = (Text?.GetHashCode() ?? 0) ^ (DisplayTitle?.GetHashCode() ?? 0) ^
+                       (Data?.GetHashCode() ?? 0) ^ (SenderApp?.GetHashCode() ?? 0) ^ Type.GetHashCode();
         return hashcode;
     }
 }

@@ -79,7 +79,8 @@ public partial class PreviewPanel : UserControl
 
     private void TxtBoxPre_GotFocus(object sender, System.Windows.RoutedEventArgs e)
     {
-        TxtBoxPre.SelectAll();
+        TextBox tb = (TextBox)sender;
+        tb.Dispatcher.BeginInvoke(new Action(() => tb.SelectAll()));
     }
 
     private void TxtBoxPre_TextChanged(object sender, TextChangedEventArgs e)

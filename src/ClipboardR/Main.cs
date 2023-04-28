@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Flow.Launcher.Plugin;
 using System.Threading.Tasks;
 using System.Windows.Controls;
@@ -70,19 +71,12 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
         results.AddRange(displayData.Select(o => new Result
         {
             Title = o.DisplayTitle,
-            SubTitle = o.SenderApp,
-            // IcoPath = o.IconPath,
+            SubTitle = $"{o.Score}: {o.SenderApp}",
             Icon = () => o.Icon,
             CopyText = o.Text,
             Score = o.Score,
             TitleToolTip = o.Text,
             SubTitleToolTip = o.SenderApp,
-            // Preview = new Result.PreviewInfo
-            // {
-            //     Description = o.Text,
-            //     PreviewImagePath = o.PreviewImagePath,
-            //     IsMedia = true,
-            // },
             PreviewPanel = new Lazy<UserControl>(() => new PreviewPanel(
                 o,
                 _context!,
@@ -114,7 +108,8 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
             IconPath = _defaultIconPath,
             Icon = new BitmapImage(new Uri(_defaultIconPath, UriKind.RelativeOrAbsolute)),
             PreviewImagePath = _defaultIconPath,
-            Score = CurrentScore,
+            Score = CurrentScore + 1,
+            Time = DateTime.Now,
         };
         switch (e.ContentType)
         {
@@ -122,16 +117,8 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                 clipboardData.Text = _clipboard.ClipboardText;
                 break;
             case SharpClipboard.ContentTypes.Image:
-                clipboardData.Text = "Image";
-                // string? p = null;
+                clipboardData.Text = $"Image:{clipboardData.Time:yy-MM-dd-HH:mm:ss}";
                 if (_settings.CacheImages) SaveImageCache(clipboardData);
-                // if (p != null)
-                // {
-                //     clipboardData.PreviewImagePath = p;
-                //     clipboardData.IconPath = p;
-                //     var img = Image.FromFile(p);
-                //     clipboardData.Icon = img.ToBitmapImage();
-                // }
                 clipboardData.Icon = _clipboard.ClipboardImage.ToBitmapImage();
 
                 break;
@@ -147,10 +134,10 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                 break;
         }
 
-        clipboardData.DisplayTitle =
-            clipboardData.Text.Length > MaxTitleLength
-                ? clipboardData.Text[..MaxTitleLength].Trim() + "..."
-                : clipboardData.Text;
+        var tmpDisTitle = clipboardData.Text.Length > MaxTitleLength
+            ? clipboardData.Text[..MaxTitleLength].Trim().Replace("\n", "") + "..."
+            : clipboardData.Text;
+        clipboardData.DisplayTitle = Regex.Replace(tmpDisTitle, @"\s", "");
 
         // make sure no repeat
         if (_dataList.Any(node => node.Equals(clipboardData)))
@@ -186,8 +173,8 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 
     public void CopyToClipboard(ClipboardData clipboardData)
     {
-        System.Windows.Forms.Clipboard.SetDataObject(clipboardData.Data);
         _dataList.Remove(clipboardData);
+        System.Windows.Forms.Clipboard.SetDataObject(clipboardData.Data);
         _context!.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
     }
 
