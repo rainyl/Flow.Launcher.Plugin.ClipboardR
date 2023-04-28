@@ -5,8 +5,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:ClipboardR.Panels"
              mc:Ignorable="d">
-    <Grid HorizontalAlignment="Center" VerticalAlignment="Center" 
-          MinWidth="250" MinHeight="200" MaxWidth="400" MaxHeight="600">
+    <Grid
+          MinWidth="300" MinHeight="100"
+          MaxWidth="340" MaxHeight="500" HorizontalAlignment="Center">
         <Grid.RowDefinitions>
             <RowDefinition Height="90*" />
             <RowDefinition Height="10*" />
@@ -15,24 +16,27 @@
             <ColumnDefinition Width="50*" />
             <ColumnDefinition Width="50*" />
         </Grid.ColumnDefinitions>
-        <Image x:Name="PreImage" 
-               HorizontalAlignment="Center" Margin="5,5,5,5" VerticalAlignment="Center"
-               Grid.ColumnSpan="2" Visibility="Hidden" MinWidth="200" MinHeight="200" 
-               MaxWidth="400" MaxHeight="500" />
-        <TextBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Grid.RowSpan="2" 
-                 x:Name="TxtBoxPre" HorizontalAlignment="Center" TextWrapping="Wrap" VerticalAlignment="Top"
-                 Panel.ZIndex="1" FontSize="14" TextAlignment="Justify" Padding="5,5,5,5" 
-                 MinWidth="200" MinHeight="200" MaxWidth="400" MaxHeight="500"
-                 ScrollViewer.HorizontalScrollBarVisibility="Auto" Focusable="True" 
-                 VerticalScrollBarVisibility="Auto" Text="" GotFocus="TxtBoxPre_GotFocus" 
-                 Margin="5,5,5,5" HorizontalContentAlignment="Stretch" 
-                 TextChanged="TxtBoxPre_TextChanged" IsReadOnly="True" />
-        <Button Grid.Column="0" Grid.Row="1" 
-                x:Name="BtnCopy" Content="Copy" HorizontalAlignment="Center" VerticalAlignment="Center"
-                MinWidth="50" MinHeight="20" Margin="0,5,0,5" Click="BtnCopy_Click" />
-        <Button Grid.Column="1" Grid.Row="1" 
-                x:Name="BtnDelete" Content="Delete" HorizontalAlignment="Center" 
-                VerticalAlignment="Center" MinWidth="50" MinHeight="20"
-                Margin="0,5,0,5" Click="BtnDelete_Click" />
+        <Image Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Grid.RowSpan="1" Panel.ZIndex="0"
+               x:Name="PreImage" Margin="3,3,3,3"
+               HorizontalAlignment="Center" VerticalAlignment="Center"
+               Visibility="Hidden" 
+               MaxWidth="320" MaxHeight="400" />
+        <TextBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Grid.RowSpan="1" IsUndoEnabled="False"
+                 x:Name="TxtBoxPre" HorizontalAlignment="Center"
+                 Panel.ZIndex="1" FontSize="14" TextAlignment="Left" Padding="5,5,5,5" 
+                 MaxWidth="320" MaxHeight="400" Focusable="True" 
+                 VerticalScrollBarVisibility="Auto" Text="&lt;UserControl x:Class=&quot;ClipboardR.Panels.PreviewPanel&quot;&#xD;&#xA;             xmlns=&quot;http://schemas.microsoft.com/winfx/2006/xaml/presentation&quot;&#xD;&#xA;             xmlns:x=&quot;http://schemas.microsoft.com/winfx/2006/xaml&quot;&#xD;&#xA;             xmlns:mc=&quot;http://schemas.openxmlformats.org/markup-compatibility/2006&quot;&#xD;&#xA;             xmlns:d=&quot;http://schemas.microsoft.com/expression/blend/2008&quot;&#xD;&#xA;             xmlns:local=&quot;clr-namespace:ClipboardR.Panels&quot;&#xD;&#xA;             mc:Ignorable=&quot;d&quot;&gt;&#xD;&#xA;    &lt;Grid HorizontalAlignment=&quot;Center&quot; VerticalAlignment=&quot;Center&quot; &#xD;&#xA;          Margin=&quot;5, 5, 5, 5&quot;&#xD;&#xA;          MinWidth=&quot;410&quot; MinHeight=&quot;620&quot;&gt;&#xD;&#xA;        &lt;Grid.RowDefinitions&gt;&#xD;&#xA;            &lt;RowDefinition Height=&quot;90*&quot; /&gt;&#xD;&#xA;            &lt;RowDefinition Height=&quot;10*&quot; /&gt;&#xD;&#xA;        &lt;/Grid.RowDefinitions&gt;&#xD;&#xA;        &lt;Grid.ColumnDefinitions&gt;&#xD;&#xA;            &lt;ColumnDefinition Width=&quot;50*&quot; /&gt;&#xD;&#xA;            &lt;ColumnDefinition Width=&quot;50*&quot; /&gt;&#xD;&#xA;        &lt;/Grid.ColumnDefinitions&gt;&#xD;&#xA;        &lt;Image x:Name=&quot;PreImage&quot; Margin=&quot;3,3,3,3&quot;&#xD;&#xA;               HorizontalAlignment=&quot;Center&quot; VerticalAlignment=&quot;Center&quot;&#xD;&#xA;               Grid.ColumnSpan=&quot;2&quot; Visibility=&quot;Hidden&quot; Panel.ZIndex=&quot;0&quot;&#xD;&#xA;               MinWidth=&quot;410&quot; MinHeight=&quot;100&quot; &#xD;&#xA;               MaxWidth=&quot;420&quot; MaxHeight=&quot;500&quot; /&gt;&#xD;&#xA;        &lt;TextBox Grid.Row=&quot;0&quot; Grid.Column=&quot;0&quot; Grid.ColumnSpan=&quot;2&quot; Grid.RowSpan=&quot;2&quot; &#xD;&#xA;                 x:Name=&quot;TxtBoxPre&quot; HorizontalAlignment=&quot;Center&quot; VerticalAlignment=&quot;Center&quot;&#xD;&#xA;                 Panel.ZIndex=&quot;1&quot; FontSize=&quot;14&quot; TextAlignment=&quot;Left&quot; Padding=&quot;3,3,3,3&quot; &#xD;&#xA;                 MinWidth=&quot;410&quot; MinHeight=&quot;100&quot; MaxWidth=&quot;420&quot; MaxHeight=&quot;500&quot; Focusable=&quot;True&quot; &#xD;&#xA;                 VerticalScrollBarVisibility=&quot;Auto&quot; Text=&quot;finition Width=&amp;quot;50*&amp;quot; /&amp;gt;&amp;#xD;&amp;#xA;        &amp;lt;/Grid.ColumnDefinitions&amp;gt;&amp;#xD;&amp;#xA;        &amp;lt;Image x:Name=&amp;quot;PreImage&amp;quot; Margin=&amp;quot;3,3,3,3&amp;quot;&amp;#xD;&amp;#xA;               HorizontalAlignment=&amp;quot;Center&amp;quot; VerticalAlignment=&amp;quot;Center&amp;quot;&amp;#xD;&amp;#xA;               Grid.ColumnSpan=&amp;quot;2&amp;quot; Visibility=&amp;quot;Hidden&amp;quot; Panel.ZIndex=&amp;quot;0&amp;quot;&amp;#xD;&amp;#xA;               MinWidth=&amp;quot;410&amp;quot; MinHeight=&amp;quot;100&amp;quot; &amp;#xD;&amp;#xA;               MaxWidth=&amp;quot;420&amp;quot; MaxHeight=&amp;quot;500&amp;quot; /&amp;gt;&amp;#xD;&amp;#xA;        &amp;lt;TextBox Grid.Row=&amp;quot;0&amp;quot; Grid.Column=&amp;quot;0&amp;quot; Grid.ColumnSpan=&amp;quot;2&amp;quot; Grid.RowSpan=&amp;quot;2&amp;quot; &amp;#xD;&amp;#xA;                 x:Name=&amp;quot;TxtBoxPre&amp;quot; HorizontalAlignment=&amp;quot;Center&amp;quot; VerticalAlignment=&amp;quot;Center&amp;quot;&amp;#xD;&amp;#xA;                 Panel.ZIndex=&amp;quot;1&amp;quot; FontSize=&amp;quot;14&amp;quot; TextAlignment=&amp;quot;Left&amp;quot; Padding=&amp;quot;3,3,3,3&amp;quot; &amp;#xD;&amp;#xA;                 MinWidth=&amp;quot;410&amp;quot; MinHeight=&amp;quot;100&amp;quot; MaxWidth=&amp;quot;420&amp;quot; MaxHeight=&amp;quot;500&amp;quot; Focusable=&amp;quot;True&amp;quot; &amp;#xD;&amp;#xA;                 VerticalScrollBarVisibility=&amp;quot;Auto&amp;quot; Text=&amp;quot;dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd&amp;amp;#xD;&amp;amp;#xA;&amp;quot; GotFocus=&amp;quot;TxtBoxPre_GotFocus&amp;quot; &amp;#xD;&amp;#xA;                 Margin=&amp;quot;3,3,3,3&amp;quot; HorizontalContentAlignment=&amp;quot;Left&amp;quot; &amp;#xD;&amp;#xA;                 TextChanged=&amp;quot;TxtBoxPre_TextChanged&amp;quot; IsReadOnly=&amp;quot;True&amp;quot; /&amp;gt;&amp;#xD;&amp;#xA;        &amp;lt;Button Grid.Column=&amp;quot;0&amp;quot; Grid.Row=&amp;quot;1&amp;quot; &amp;#xD;&amp;#xA;                x:Name=&amp;quot;BtnCopy&amp;quot; Content=&amp;quot;Copy&amp;quot; HorizontalAlignment&quot; GotFocus=&quot;TxtBoxPre_GotFocus&quot; &#xD;&#xA;                 Margin=&quot;3,3,3,3&quot; HorizontalContentAlignment=&quot;Left&quot; &#xD;&#xA;                 TextChanged=&quot;TxtBoxPre_TextChanged&quot; IsReadOnly=&quot;True&quot; /&gt;&#xD;&#xA;        &lt;Button Grid.Column=&quot;0&quot; Grid.Row=&quot;1&quot; &#xD;&#xA;                x:Name=&quot;BtnCopy&quot; Content=&quot;Copy&quot; HorizontalAlignment=&quot;Center&quot; VerticalAlignment=&quot;Center&quot;&#xD;&#xA;                MinWidth=&quot;50&quot; MinHeight=&quot;30&quot; MaxWidth=&quot;50&quot; MaxHeight=&quot;30&quot; &#xD;&#xA;                Margin=&quot;5,5,5,5&quot; Click=&quot;BtnCopy_Click&quot; /&gt;&#xD;&#xA;        &lt;Button Grid.Column=&quot;1&quot; Grid.Row=&quot;1&quot; &#xD;&#xA;                x:Name=&quot;BtnDelete&quot; Content=&quot;Delete&quot; HorizontalAlignment=&quot;Center&quot; VerticalAlignment=&quot;Center&quot; &#xD;&#xA;                MinWidth=&quot;50&quot; MinHeight=&quot;30&quot; MaxWidth=&quot;50&quot; MaxHeight=&quot;30&quot; &#xD;&#xA;                Margin=&quot;5,5,5,5&quot; Click=&quot;BtnDelete_Click&quot; /&gt;&#xD;&#xA;    &lt;/Grid&gt;&#xD;&#xA;&lt;/UserControl&gt;" GotFocus="TxtBoxPre_GotFocus" 
+                 Margin="5,5,5,5" HorizontalContentAlignment="Left" 
+                 TextChanged="TxtBoxPre_TextChanged" IsReadOnly="True" HorizontalScrollBarVisibility="Auto" MinWidth="320" UseLayoutRounding="False"/>
+        <Button Grid.Row="1" Grid.Column="0"
+                x:Name="BtnCopy" Content="Copy" 
+                HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                Width="80" Height="30" 
+                Margin="5,5,5,5" Click="BtnCopy_Click" />
+        <Button Grid.Row="1" Grid.Column="1"
+                x:Name="BtnDelete" Content="Delete" 
+                HorizontalAlignment="Center" VerticalAlignment="Bottom" 
+                Width="80" Height="30" 
+                Margin="5,5,5,5" Click="BtnDelete_Click" />
     </Grid>
 </UserControl>

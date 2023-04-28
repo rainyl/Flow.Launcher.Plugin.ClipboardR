@@ -1,10 +1,10 @@
 {
     "ID": "ac0201cb-6610-48dd-9c60-e292d5e3a3da",
-    "ActionKeyword": "cc",
+    "ActionKeyword": "clipboardr",
     "Name": "ClipboardR",
-    "Description": "A Clipboard Plugin for FlowLauncher",
+    "Description": "A clipboard plugin for Flow.Launcher, support pictures!",
     "Author": "Rainyl",
-    "Version": "0.1.3",
+    "Version": "0.1.4",
     "Language": "csharp",
     "Website": "https://github.com/rainyl/Flow.Launcher.Plugin.ClipboardR",
     "IcoPath": "Images/clipboard.png",
