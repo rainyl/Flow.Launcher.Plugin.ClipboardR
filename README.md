@@ -22,7 +22,7 @@ Ported to Flow.Launcher: https://github.com/liberize/Flow.Launcher.Plugin.Clipbo
 
 ## Usage
 
-The default keyword is `cc`, you can chenge it in the FlowLauncher settings.
+The default keyword is `clipboardr`, you can chenge it in the FlowLauncher settings.
 
 Click `Copy` to copy the current data to clipboard, Click `Delete` to delete the record.
 
