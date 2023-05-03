@@ -24,7 +24,6 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
     private DirectoryInfo ClipCacheDir { get; set; } = null!;
     private string _defaultIconPath = null!;
     private const int MaxDataCount = 1000;
-    private const int MaxTitleLength = 30;
     private static Random _random = new();
     private Settings _settings = null!;
     private string _settingsPath = null!;
@@ -134,10 +133,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                 break;
         }
 
-        var tmpDisTitle = clipboardData.Text.Length > MaxTitleLength
-            ? clipboardData.Text[..MaxTitleLength].Trim().Replace("\n", "") + "..."
-            : clipboardData.Text;
-        clipboardData.DisplayTitle = Regex.Replace(tmpDisTitle, @"\s", "");
+        clipboardData.DisplayTitle = Regex.Replace(clipboardData.Text.Trim(), @"(\r|\n|\t|\v)", "");
 
         // make sure no repeat
         if (_dataList.Any(node => node.Equals(clipboardData)))

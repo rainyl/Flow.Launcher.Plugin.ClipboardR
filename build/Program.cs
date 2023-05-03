@@ -34,7 +34,7 @@ public class BuildContext : FrostingContext
     public Lazy<SolutionParserResult> DefaultSln { get; set; }
     public const string DeployFramework = "net7.0-windows";
     public string PublishDir = ".dist";
-    public string PublishVersion = "0.1.5";
+    public string PublishVersion = "0.1.6";
 
     public BuildContext(ICakeContext context)
         : base(context)
