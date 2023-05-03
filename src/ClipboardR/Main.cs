@@ -19,7 +19,7 @@ namespace ClipboardR;
 
 public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 {
-    private SharpClipboard _clipboard = new();
+    private SharpClipboard _clipboard = new() {ObserveLastEntry = false};
     private DirectoryInfo ClipDir { get; set; } = null!;
     private DirectoryInfo ClipCacheDir { get; set; } = null!;
     private string _defaultIconPath = null!;
