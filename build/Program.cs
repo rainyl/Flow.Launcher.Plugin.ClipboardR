@@ -34,7 +34,7 @@ public class BuildContext : FrostingContext
     public Lazy<SolutionParserResult> DefaultSln { get; set; }
     public const string DeployFramework = "net7.0-windows";
     public string PublishDir = ".dist";
-    public string PublishVersion = "0.1.6";
+    public string PublishVersion = "0.1.7";
 
     public BuildContext(ICakeContext context)
         : base(context)
@@ -105,7 +105,7 @@ public class PublishTask : FrostingTask<BuildContext>
             });
         context.CreateDirectory(dstDir);
         var files = context
-            .GetFiles(@$"{srcDir}/**/(*(c|C)lipboard*.(png|json|dll)|plugin.json|*simulator.dll)");
+            .GetFiles(@$"{srcDir}/**/(*(c|C)lipboard*.(png|json|dll)|*.png|plugin.json|*simulator.dll)");
         foreach (var f in files)
             context.Information($"Adding: {f}");
         context.ZipCompress(

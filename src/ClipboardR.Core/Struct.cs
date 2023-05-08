@@ -14,7 +14,9 @@ public struct ClipboardData : IEquatable<ClipboardData>
     public string PreviewImagePath;
     public SharpClipboard.ContentTypes Type;
     public int Score;
+    public int InitScore;
     public DateTime Time;
+    public bool Pined;
 
     public bool Equals(ClipboardData b)
     {

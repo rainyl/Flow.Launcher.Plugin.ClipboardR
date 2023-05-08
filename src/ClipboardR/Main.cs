@@ -1,12 +1,10 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Flow.Launcher.Plugin;
-using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using WindowsInput;
@@ -19,11 +17,12 @@ namespace ClipboardR;
 
 public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 {
-    private SharpClipboard _clipboard = new() {ObserveLastEntry = false};
+    private SharpClipboard _clipboard = new() { ObserveLastEntry = false };
     private DirectoryInfo ClipDir { get; set; } = null!;
     private DirectoryInfo ClipCacheDir { get; set; } = null!;
     private string _defaultIconPath = null!;
     private const int MaxDataCount = 1000;
+    private const string PinUnicode = "📌";
     private static Random _random = new();
     private Settings _settings = null!;
     private string _settingsPath = null!;
@@ -62,25 +61,34 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
     public List<Result> Query(Query query)
     {
         var displayData = query.Search.Trim().Length == 0
-            ? _dataList
+            ? _dataList.ToArray()
             : _dataList.Where(i =>
-                !string.IsNullOrEmpty(i.Text) && i.Text.ToLower().Contains(query.Search.Trim().ToLower()));
+                !string.IsNullOrEmpty(i.Text) && i.Text.ToLower().Contains(query.Search.Trim().ToLower())).ToArray();
 
         var results = new List<Result>();
-        results.AddRange(displayData.Select(o => new Result
+        results.AddRange(displayData.Where(cd => cd.Pined).Select(ClipDataToResult));
+        results.AddRange(displayData.Where(cd => !cd.Pined).Select(ClipDataToResult));
+        return results;
+    }
+
+    private Result ClipDataToResult(ClipboardData o)
+    {
+        var disSubTitle = o.Pined ? $"{PinUnicode}: {o.SenderApp}" : o.SenderApp!;
+        return new Result
         {
             Title = o.DisplayTitle,
-            SubTitle = $"{o.Score}: {o.SenderApp}",
+            SubTitle = disSubTitle,
             Icon = () => o.Icon,
             CopyText = o.Text,
             Score = o.Score,
             TitleToolTip = o.Text,
-            SubTitleToolTip = o.SenderApp,
+            SubTitleToolTip = disSubTitle,
             PreviewPanel = new Lazy<UserControl>(() => new PreviewPanel(
                 o,
                 _context!,
                 delAction: RemoveFromDatalist,
-                copyAction: CopyToClipboard
+                copyAction: CopyToClipboard,
+                pinAction: PinOneRecord
             )),
             Action = c =>
             {
@@ -91,8 +99,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                     .ModifiedKeyStroke(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_V);
                 return true;
             }
-        }));
-        return results;
+        };
     }
 
     private void _OnClipboardChange(object? sender, SharpClipboard.ClipboardChangedEventArgs e)
@@ -108,7 +115,9 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
             Icon = new BitmapImage(new Uri(_defaultIconPath, UriKind.RelativeOrAbsolute)),
             PreviewImagePath = _defaultIconPath,
             Score = CurrentScore + 1,
+            InitScore = CurrentScore + 1,
             Time = DateTime.Now,
+            Pined = false,
         };
         switch (e.ContentType)
         {
@@ -177,6 +186,13 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
     public void RemoveFromDatalist(ClipboardData clipboardData)
     {
         _dataList.Remove(clipboardData);
+        _context!.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
+    }
+
+    public void PinOneRecord(ClipboardData clipboardData)
+    {
+        _dataList.Remove(clipboardData);
+        _dataList.AddLast(clipboardData);
         _context!.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
     }
 
