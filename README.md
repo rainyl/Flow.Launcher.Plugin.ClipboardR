@@ -10,9 +10,9 @@ Give me a star :star: if you like this project~
 
 This Project is developed on the shoulders of giant:
 
-Original Repo: https://github.com/Wox-launcher/Wox.Plugin.ClipboardManager
+Original Repo: [Wox.Plugin.ClipboardManager](https://github.com/Wox-launcher/Wox.Plugin.ClipboardManager)
 
-Ported to Flow.Launcher: https://github.com/liberize/Flow.Launcher.Plugin.ClipboardHistory
+Ported to Flow.Launcher: [Flow.Launcher.Plugin.ClipboardHistory](https://github.com/liberize/Flow.Launcher.Plugin.ClipboardHistory)
 
 ## Installation
 
@@ -37,6 +37,11 @@ Click `Copy` or directly the `search result` to copy the current data to clipboa
 If you want to save images in your clipboard, open the `CacheImages` option in settings.
 
 ![settings](https://raw.githubusercontent.com/rainyl/Flow.Launcher.Plugin.ClipboardR/master/Images/settings.png)
+
+## Todo List
+
+- [ ] Save images maually
+- [ ] Cached images format defination
 
 ## License
 
