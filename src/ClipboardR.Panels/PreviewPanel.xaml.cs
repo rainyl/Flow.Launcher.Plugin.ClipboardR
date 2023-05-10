@@ -16,16 +16,20 @@ public partial class PreviewPanel : UserControl
 {
     private ClipboardData _clipboardData;
     private PluginInitContext _context;
+    private DirectoryInfo CacheDir { get; set; }
     private Action<ClipboardData> DeleteOneRecord { get; set; }
     private Action<ClipboardData> CopyRecord { get; set; }
     private Action<ClipboardData> PinRecord { get; set; }
     private int OldScore { get; set; }
 
-    public PreviewPanel(ClipboardData clipboardData, PluginInitContext context, Action<ClipboardData> delAction,
+    public PreviewPanel(ClipboardData clipboardData, PluginInitContext context,
+        DirectoryInfo cacheDir,
+        Action<ClipboardData> delAction,
         Action<ClipboardData> copyAction, Action<ClipboardData> pinAction)
     {
         _clipboardData = clipboardData;
         _context = context;
+        CacheDir = cacheDir;
         DeleteOneRecord = delAction;
         CopyRecord = copyAction;
         PinRecord = pinAction;
@@ -86,7 +90,7 @@ public partial class PreviewPanel : UserControl
 
     private void SetBtnIcon()
     {
-        BtnPin.Content = FindResource(_clipboardData.Pined ? "Pined" : "Pin");
+        BtnPin.Content = FindResource(_clipboardData.Pined ? "PinedIcon" : "PinIcon");
     }
     
     private void TxtBoxPre_GotFocus(object sender, System.Windows.RoutedEventArgs e)
@@ -104,5 +108,10 @@ public partial class PreviewPanel : UserControl
         _clipboardData.Pined = !_clipboardData.Pined;
         _clipboardData.Score = _clipboardData.Pined ? int.MaxValue : _clipboardData.InitScore;
         PinRecord?.Invoke(_clipboardData);
+    }
+
+    private void ImSaveAs_Click(object sender, RoutedEventArgs e)
+    {
+        Utils.SaveImageCache(_clipboardData, CacheDir);
     }
 }

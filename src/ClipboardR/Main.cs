@@ -9,7 +9,6 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using WindowsInput;
 using WK.Libraries.SharpClipboardNS;
-using Image = System.Drawing.Image;
 using ClipboardR.Core;
 using ClipboardR.Panels;
 
@@ -23,7 +22,6 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
     private string _defaultIconPath = null!;
     private const int MaxDataCount = 1000;
     private const string PinUnicode = "📌";
-    private static Random _random = new();
     private Settings _settings = null!;
     private string _settingsPath = null!;
     private int CurrentScore { get; set; } = 0;
@@ -86,6 +84,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
             PreviewPanel = new Lazy<UserControl>(() => new PreviewPanel(
                 o,
                 _context!,
+                ClipCacheDir,
                 delAction: RemoveFromDatalist,
                 copyAction: CopyToClipboard,
                 pinAction: PinOneRecord
@@ -126,7 +125,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                 break;
             case SharpClipboard.ContentTypes.Image:
                 clipboardData.Text = $"Image:{clipboardData.Time:yy-MM-dd-HH:mm:ss}";
-                if (_settings.CacheImages) SaveImageCache(clipboardData);
+                if (_settings.CacheImages) Utils.SaveImageCache(clipboardData, ClipCacheDir);
                 clipboardData.Icon = _clipboard.ClipboardImage.ToBitmapImage();
 
                 break;
@@ -153,24 +152,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
         CurrentScore++;
     }
 
-    private string? SaveImageCache(ClipboardData clipboardData)
-    {
-        if (clipboardData.Data is not Image img) return null;
-        var name = RandomString(10);
-        var path = Path.Join(ClipCacheDir.FullName, $"{name}.png");
-
-        img.Save(path);
-        return path;
-    }
-
     public Control CreateSettingPanel() => new SettingsPanel(_settings, _context!);
-
-    private string RandomString(int length)
-    {
-        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
-        return new string(Enumerable.Repeat(chars, length)
-            .Select(s => s[_random.Next(s.Length)]).ToArray());
-    }
 
     public void Dispose()
     {

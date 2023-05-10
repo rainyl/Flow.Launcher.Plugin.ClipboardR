@@ -6,10 +6,11 @@
              xmlns:local="clr-namespace:ClipboardR.Panels"
              mc:Ignorable="d">
     <UserControl.Resources>
-        <Image x:Key="Copy" Source="pack://application:,,,/ClipboardR.Panels;Component/Images/copy.png" Height="30" Width="30" />
-        <Image x:Key="Pin" Source="pack://application:,,,/ClipboardR.Panels;Component/Images/pin.png" Height="30" Width="30" />
-        <Image x:Key="Pined" Source="pack://application:,,,/ClipboardR.Panels;Component/Images/pined.png" Height="30" Width="30" />
-        <Image x:Key="Delete" Source="pack://application:,,,/ClipboardR.Panels;Component/Images/delete.png" Height="30" Width="30" />
+        <Image x:Key="CopyIcon" Source="pack://application:,,,/ClipboardR.Panels;Component/Images/copy.png" Height="30" Width="30" />
+        <Image x:Key="PinIcon" Source="pack://application:,,,/ClipboardR.Panels;Component/Images/pin.png" Height="30" Width="30" />
+        <Image x:Key="PinedIcon" Source="pack://application:,,,/ClipboardR.Panels;Component/Images/pined.png" Height="30" Width="30" />
+        <Image x:Key="DeleteIcon" Source="pack://application:,,,/ClipboardR.Panels;Component/Images/delete.png" Height="30" Width="30" />
+        <Image x:Key="SaveIcon" Source="pack://application:,,,/ClipboardR.Panels;Component/Images/save.png"></Image>
     </UserControl.Resources>
     <Grid
           MinWidth="300" MinHeight="100"
@@ -26,7 +27,17 @@
                x:Name="PreImage" Margin="3,3,3,3"
                HorizontalAlignment="Center" VerticalAlignment="Center"
                Visibility="Hidden" 
-               MaxWidth="320" MaxHeight="400" />
+               MaxWidth="320" MaxHeight="400" >
+            <Image.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Save" Click="ImSaveAs_Click">
+                        <MenuItem.Icon>
+                            <DynamicResource ResourceKey="SaveIcon"></DynamicResource>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                </ContextMenu>
+            </Image.ContextMenu>
+        </Image>
         <TextBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Grid.RowSpan="1" IsUndoEnabled="False"
                  x:Name="TxtBoxPre" HorizontalAlignment="Center"
                  Panel.ZIndex="1" FontSize="14" TextAlignment="Left" Padding="5,5,5,5" 
@@ -49,21 +60,21 @@
                     HorizontalAlignment="Center" VerticalAlignment="Bottom"
                     Width="33" Height="33" Padding="0, 0, 0, 0"
                     Margin="5,5,5,5" Click="BtnCopy_Click" >
-                <DynamicResource ResourceKey="Copy"/>
+                <DynamicResource ResourceKey="CopyIcon"/>
             </Button>
             <Button Grid.Row="0" Grid.Column="1"
                     x:Name="BtnPin" ToolTip="Pin on top"
                     HorizontalAlignment="Center" VerticalAlignment="Bottom"
                     Width="33" Height="33" Padding="0, 0, 0, 0"
                     Margin="5,5,5,5" Click="BtnPin_Click" >
-                <DynamicResource ResourceKey="Pined"/>
+                <DynamicResource ResourceKey="PinIcon"/>
             </Button>
             <Button Grid.Row="0" Grid.Column="2"
                 x:Name="BtnDelete" ToolTip="Delete this record"
                 HorizontalAlignment="Center" VerticalAlignment="Bottom" 
                 Width="33" Height="33" Padding="0, 0, 0, 0"
                 Margin="5,5,5,5" Click="BtnDelete_Click" >
-                <DynamicResource ResourceKey="Delete"/>
+                <DynamicResource ResourceKey="DeleteIcon"/>
             </Button>
         </Grid>
         

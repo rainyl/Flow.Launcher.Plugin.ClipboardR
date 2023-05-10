@@ -14,6 +14,13 @@ Original Repo: [Wox.Plugin.ClipboardManager](https://github.com/Wox-launcher/Wox
 
 Ported to Flow.Launcher: [Flow.Launcher.Plugin.ClipboardHistory](https://github.com/liberize/Flow.Launcher.Plugin.ClipboardHistory)
 
+## Features
+
+- Preview panel, support images
+- Copy & delete record
+- Cache images supported
+- Manually save images
+
 ## Installation
 
 ### Using release
@@ -40,8 +47,9 @@ If you want to save images in your clipboard, open the `CacheImages` option in s
 
 ## Todo List
 
-- [ ] Save images maually
-- [ ] Cached images format defination
+- [x] Save images manually
+- [ ] Cached images format definition
+- [ ] Image OCR
 
 ## License
 

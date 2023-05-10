@@ -3,6 +3,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net7.0-windows</TargetFramework>
     <RunWorkingDirectory>$(MSBuildProjectDirectory)</RunWorkingDirectory>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Cake.Compression" Version="0.3.0" />

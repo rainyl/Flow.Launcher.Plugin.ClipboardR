@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClipboardR.Core.Test", "src
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Build", "build\Build.csproj", "{8AE1016A-11A6-4A6C-B5F4-97149923841C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClipboardR.Panels.Test", "src\ClipboardR.Panels.Test\ClipboardR.Panels.Test.csproj", "{B5DC21C9-618A-48D1-969F-E8D5BF7FBFD6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{8AE1016A-11A6-4A6C-B5F4-97149923841C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8AE1016A-11A6-4A6C-B5F4-97149923841C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8AE1016A-11A6-4A6C-B5F4-97149923841C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5DC21C9-618A-48D1-969F-E8D5BF7FBFD6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5DC21C9-618A-48D1-969F-E8D5BF7FBFD6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5DC21C9-618A-48D1-969F-E8D5BF7FBFD6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5DC21C9-618A-48D1-969F-E8D5BF7FBFD6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
