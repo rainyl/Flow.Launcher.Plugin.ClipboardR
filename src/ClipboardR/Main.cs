@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Flow.Launcher.Plugin;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -89,15 +90,17 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                 copyAction: CopyToClipboard,
                 pinAction: PinOneRecord
             )),
-            Action = c =>
+            AsyncAction = async _ =>
             {
-                // _context!.API.ShowMsg("Wow");
                 CopyToClipboard(o);
-                // Due to the focus will change when open FlowLauncher, this won't work for now
-                new InputSimulator().Keyboard
+                _context!.API.HideMainWindow();
+                while (_context!.API.IsMainWindowVisible())
+                    await Task.Delay(100);
+                new InputSimulator()
+                    .Keyboard
                     .ModifiedKeyStroke(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_V);
                 return true;
-            }
+            },
         };
     }
 
@@ -177,6 +180,11 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
         _dataList.AddLast(clipboardData);
         _context!.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
     }
+
+    // private Task<bool> HideMainWindow()
+    // {
+    //     
+    // }
 
     public void Save()
     {

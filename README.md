@@ -51,6 +51,10 @@ If you want to save images in your clipboard, open the `CacheImages` option in s
 - [ ] Cached images format definition
 - [ ] Image OCR
 
+## Acknowledgement
+
+- [IconFont](https://www.iconfont.cn)
+
 ## License
 
 [Apache License V2.0](LICENSE)
