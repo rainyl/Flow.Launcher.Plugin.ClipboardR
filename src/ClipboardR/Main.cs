@@ -21,13 +21,13 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
     private DirectoryInfo ClipDir { get; set; } = null!;
     private DirectoryInfo ClipCacheDir { get; set; } = null!;
     private string _defaultIconPath = null!;
-    private const int MaxDataCount = 1000;
+    private string _defaultPinIconPath = null!;
+    private uint _maxDataCount = 10000;
     private const string PinUnicode = "📌";
     private Settings _settings = null!;
     private string _settingsPath = null!;
     private int CurrentScore { get; set; } = 0;
 
-    // private readonly InputSimulator inputSimulator = new InputSimulator();
     private PluginInitContext? _context;
     private LinkedList<ClipboardData> _dataList = new();
 
@@ -43,6 +43,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
             : new DirectoryInfo(imageCacheDirectoryPath);
 
         _defaultIconPath = Path.Join(ClipDir.FullName, "Images/clipboard.png");
+        _defaultPinIconPath = Path.Join(ClipDir.FullName, "Images/clipboard_pined.png");
 
         _settingsPath = Path.Join(ClipDir.FullName, "settings.json");
         if (File.Exists(_settingsPath))
@@ -55,6 +56,8 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 
         _settings.ConfigFile = _settingsPath;
         _settings.Save();
+
+        _maxDataCount = _settings.MaxDataCount;
     }
 
     public List<Result> Query(Query query)
@@ -72,16 +75,17 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 
     private Result ClipDataToResult(ClipboardData o)
     {
-        var disSubTitle = o.Pined ? $"{PinUnicode}: {o.SenderApp}" : o.SenderApp!;
+        var dispSubTitle = $"{o.CreateTime:yyyy-MM-dd-hh-mm-ss}: {o.SenderApp}";
+        dispSubTitle = o.Pined ? $"{PinUnicode}{dispSubTitle}" : dispSubTitle;
         return new Result
         {
             Title = o.DisplayTitle,
-            SubTitle = disSubTitle,
+            SubTitle = dispSubTitle,
             Icon = () => o.Icon,
             CopyText = o.Text,
             Score = o.Score,
             TitleToolTip = o.Text,
-            SubTitleToolTip = disSubTitle,
+            SubTitleToolTip = dispSubTitle,
             PreviewPanel = new Lazy<UserControl>(() => new PreviewPanel(
                 o,
                 _context!,
@@ -120,6 +124,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
             InitScore = CurrentScore + 1,
             Time = DateTime.Now,
             Pined = false,
+            CreateTime = DateTime.Now,
         };
         switch (e.ContentType)
         {
@@ -130,7 +135,6 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                 clipboardData.Text = $"Image:{clipboardData.Time:yy-MM-dd-HH:mm:ss}";
                 if (_settings.CacheImages) Utils.SaveImageCache(clipboardData, ClipCacheDir);
                 clipboardData.Icon = _clipboard.ClipboardImage.ToBitmapImage();
-
                 break;
             case SharpClipboard.ContentTypes.Files:
                 var t = _clipboard.ClipboardFiles.ToArray();
@@ -150,7 +154,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
         if (_dataList.Any(node => node.Equals(clipboardData)))
             return;
         _dataList.AddFirst(clipboardData);
-        if (_dataList.Count > MaxDataCount)
+        if (_dataList.Count > _maxDataCount)
             _dataList.RemoveLast();
         CurrentScore++;
     }
@@ -174,17 +178,16 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
         _context!.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
     }
 
-    public void PinOneRecord(ClipboardData clipboardData)
+    public void PinOneRecord(ClipboardData c)
     {
-        _dataList.Remove(clipboardData);
-        _dataList.AddLast(clipboardData);
+        _dataList.Remove(c);
+        if (c.Type is SharpClipboard.ContentTypes.Text or SharpClipboard.ContentTypes.Files)
+            c.Icon = c.Pined
+                ? new BitmapImage(new Uri(_defaultPinIconPath, UriKind.RelativeOrAbsolute))
+                : new BitmapImage(new Uri(_defaultIconPath, UriKind.RelativeOrAbsolute));
+        _dataList.AddLast(c);
         _context!.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
     }
-
-    // private Task<bool> HideMainWindow()
-    // {
-    //     
-    // }
 
     public void Save()
     {

@@ -3,20 +3,70 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
              xmlns:local="clr-namespace:ClipboardR.Panels"
              mc:Ignorable="d"
              d:DesignHeight="120" d:DesignWidth="400"
              DataContext="{Binding RelativeSource={RelativeSource Self}}"
              >
-    <Grid Height="100" Margin="0,10,0,10" Width="NaN">
+    <Grid 
+        Height="100" Width="NaN"
+        Margin="0,10,0,10"
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center">
         <Grid.RowDefinitions>
-            <RowDefinition Height="43*" />
-            <RowDefinition Height="43*" />
+            <RowDefinition Height="30*" />
+            <RowDefinition Height="70*" />
         </Grid.RowDefinitions>
-        <CheckBox Grid.Row="0" Content="Cache Images" IsChecked="{Binding settings.CacheImages}"
-                  HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" />
-        <Label Grid.Row="1" Content="Restart FlowLauncher to apply" HorizontalAlignment="Center" Margin="0,4,0,0"
-               VerticalAlignment="Center" FontSize="18" />
-
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <CheckBox 
+            x:Name="CkBoxCacheImages"
+            Grid.Row="0" Grid.Column="0"
+            Content="Cache Images" 
+            IsChecked="{Binding settings.CacheImages}"
+            Checked="CkBoxCacheImages_OnChecked"
+            Unchecked="CkBoxCacheImages_OnChecked"
+            HorizontalAlignment="Center" 
+            VerticalAlignment="Center" 
+            FontSize="14"/>
+        <Label 
+            Grid.Row="0" Grid.Column="1"
+            Content="Max Record Count: "
+            FontSize="14"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Center"/>
+        <xctk:UIntegerUpDown
+            x:Name="UpDownMaxRecCount"
+            Grid.Row="0" Grid.Column="2"
+            Width="80"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Center"
+            FontSize="14"
+            Value="{Binding settings.MaxDataCount}"
+            ValueChanged="UpDownMaxRecCount_OnValueChanged"
+            />
+        <Button
+            x:Name="BtnRestartFlow"
+            Grid.Row="1" Grid.Column="0"
+            Width="70" Height="30"
+            Padding="3, 3, 3, 3"
+            HorizontalAlignment="Right"
+            Content="Restart"
+            Click="BtnRestartFlow_OnClick"
+            FontSize="18"/>
+        <Label 
+            Grid.Row="1" Grid.Column="1"
+            Grid.ColumnSpan="2"
+            Content="Flow.Launcher to apply" 
+            HorizontalAlignment="Left" 
+            VerticalAlignment="Center" 
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            Margin="5, 5, 5, 5"
+            FontSize="18" />
     </Grid>
 </UserControl>
