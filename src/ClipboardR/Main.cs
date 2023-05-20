@@ -26,7 +26,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
     private const string PinUnicode = "📌";
     private Settings _settings = null!;
     private string _settingsPath = null!;
-    private int CurrentScore { get; set; } = 0;
+    private int CurrentScore { get; set; } = 1;
 
     private PluginInitContext? _context;
     private LinkedList<ClipboardData> _dataList = new();
@@ -68,8 +68,20 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                 !string.IsNullOrEmpty(i.Text) && i.Text.ToLower().Contains(query.Search.Trim().ToLower())).ToArray();
 
         var results = new List<Result>();
-        results.AddRange(displayData.Where(cd => cd.Pined).Select(ClipDataToResult));
-        results.AddRange(displayData.Where(cd => !cd.Pined).Select(ClipDataToResult));
+        results.AddRange(displayData.Select(ClipDataToResult));
+        results.Add(new Result()
+        {
+            Title="Clear All Records",
+            SubTitle = "Click to clear all records",
+            IcoPath = _defaultIconPath,
+            Score = 1,
+            Action = _ =>
+            {
+                _dataList.Clear();
+                CurrentScore = 1;
+                return true;
+            },
+        });
         return results;
     }
 
