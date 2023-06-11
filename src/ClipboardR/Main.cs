@@ -22,7 +22,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
     private DirectoryInfo ClipCacheDir { get; set; } = null!;
     private string _defaultIconPath = null!;
     private string _defaultPinIconPath = null!;
-    private uint _maxDataCount = 10000;
+    private int _maxDataCount = 10000;
     private const string PinUnicode = "📌";
     private Settings _settings = null!;
     private string _settingsPath = null!;
