@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Cake.Common;
@@ -13,6 +14,7 @@ using Cake.Compression;
 using Cake.Core;
 using Cake.Core.IO;
 using Cake.Frosting;
+using Newtonsoft.Json;
 
 namespace Build;
 
@@ -34,7 +36,7 @@ public class BuildContext : FrostingContext
     public Lazy<SolutionParserResult> DefaultSln { get; set; }
     public const string DeployFramework = "net7.0-windows";
     public string PublishDir = ".dist";
-    public string PublishVersion = "0.2.4";
+    public string PublishVersion = "";
 
     public BuildContext(ICakeContext context)
         : base(context)
@@ -54,7 +56,7 @@ public class BuildLifetime : FrostingLifetime<BuildContext>
 
     public override void Teardown(BuildContext context, ITeardownContext info)
     {
-        
+        // ignore
     }
 }
 
@@ -63,8 +65,7 @@ public sealed class BuildTask : FrostingTask<BuildContext>
 {
     public override void Run(BuildContext context)
     {
-        var projects = context
-            .DefaultSln.Value.Projects.Where(p => p.Name.EndsWith("ClipboardR"));
+        var projects = context.DefaultSln.Value.Projects.Where(p => p.Name.EndsWith("ClipboardR"));
         var projectPath = projects.First().Path.FullPath;
         context.Information($"Building {projectPath}");
         context.DotNetBuild(
@@ -76,9 +77,8 @@ public sealed class BuildTask : FrostingTask<BuildContext>
                 Framework = BuildContext.DeployFramework,
                 NoDependencies = false,
                 NoIncremental = true,
-            });
-        
-        
+            }
+        );
     }
 }
 
@@ -88,12 +88,10 @@ public class PublishTask : FrostingTask<BuildContext>
 {
     public override void Run(BuildContext context)
     {
-        var project = context
-            .DefaultSln.Value.Projects
-            .First(p => p.Name.EndsWith("ClipboardR"));
-        var srcDir = project.Path.GetDirectory()
-            .Combine(new DirectoryPath($"bin/publish"));
-        var dstDir = $"{srcDir.GetParent().GetParent().GetParent().GetParent().FullPath}/{context.PublishDir}";
+        var project = context.DefaultSln.Value.Projects.First(p => p.Name.EndsWith("ClipboardR"));
+        var srcDir = project.Path.GetDirectory().Combine(new DirectoryPath($"bin/publish"));
+        var dstDir =
+            $"{srcDir.GetParent().GetParent().GetParent().GetParent().FullPath}/{context.PublishDir}";
         context.DotNetPublish(
             project.Path.FullPath,
             new DotNetPublishSettings
@@ -102,17 +100,35 @@ public class PublishTask : FrostingTask<BuildContext>
                 Configuration = context.DotNetBuildConfig,
                 Framework = BuildContext.DeployFramework,
                 Verbosity = DotNetVerbosity.Minimal,
-            });
+            }
+        );
         context.CreateDirectory(dstDir);
-        var files = context
-            .GetFiles(@$"{srcDir}/**/(*(c|C)lipboard*.(png|json|dll)|*.png|plugin.json|(*simulator).dll)");
+        var files = context.GetFiles(
+            @$"{srcDir}/**/(*(c|C)lipboard*.(png|json|dll)|*.png|plugin.json|(*simulator).dll)"
+        );
+        FilePath? versionFile = null;
         foreach (var f in files)
+        {
             context.Information($"Adding: {f}");
+            if (f.ToString().EndsWith("plugin.json"))
+                versionFile = f;
+        }
+        if (versionFile != null)
+        {
+            VersionInfo? versionInfoObj = JsonConvert.DeserializeObject<VersionInfo>(
+                File.ReadAllText(versionFile.ToString())
+            );
+            if (versionInfoObj != null)
+                context.PublishVersion = versionInfoObj.Version;
+            else
+                Console.WriteLine("Get version info from plugin.json failed!");
+        }
         context.ZipCompress(
             rootPath: srcDir,
             outputPath: $"{dstDir}/ClipboardR-v{context.PublishVersion}.zip",
             filePaths: files,
-            level: 9);
+            level: 9
+        );
     }
 }
 
@@ -124,7 +140,9 @@ public sealed class CleanTask : FrostingTask<BuildContext>
         foreach (var project in context.DefaultSln.Value.Projects)
         {
             context.Information($"Cleaning {project.Path.GetDirectory().FullPath}...");
-            context.CleanDirectory($"{project.Path.GetDirectory().FullPath}/bin/{context.DotNetBuildConfig}");
+            context.CleanDirectory(
+                $"{project.Path.GetDirectory().FullPath}/bin/{context.DotNetBuildConfig}"
+            );
         }
     }
 }
@@ -132,6 +150,19 @@ public sealed class CleanTask : FrostingTask<BuildContext>
 [TaskName("Default")]
 [IsDependentOn(typeof(CleanTask))]
 [IsDependentOn(typeof(BuildTask))]
-public class DefaultTask : FrostingTask
+[IsDependentOn(typeof(PublishTask))]
+public class DefaultTask : FrostingTask { }
+
+public class VersionInfo
 {
+    public string ID { get; set; }
+    public string ActionKeyword { get; set; }
+    public string Name { get; set; }
+    public string Description { get; set; }
+    public string Author { get; set; }
+    public string Version { get; set; }
+    public string Language { get; set; }
+    public string Website { get; set; }
+    public string IcoPath { get; set; }
+    public string ExecuteFileName { get; set; }
 }
