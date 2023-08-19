@@ -62,26 +62,34 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 
     public List<Result> Query(Query query)
     {
-        var displayData = query.Search.Trim().Length == 0
-            ? _dataList.ToArray()
-            : _dataList.Where(i =>
-                !string.IsNullOrEmpty(i.Text) && i.Text.ToLower().Contains(query.Search.Trim().ToLower())).ToArray();
+        var displayData =
+            query.Search.Trim().Length == 0
+                ? _dataList.ToArray()
+                : _dataList
+                    .Where(
+                        i =>
+                            !string.IsNullOrEmpty(i.Text)
+                            && i.Text.ToLower().Contains(query.Search.Trim().ToLower())
+                    )
+                    .ToArray();
 
         var results = new List<Result>();
         results.AddRange(displayData.Select(ClipDataToResult));
-        results.Add(new Result()
-        {
-            Title="Clear All Records",
-            SubTitle = "Click to clear all records",
-            IcoPath = _defaultIconPath,
-            Score = 1,
-            Action = _ =>
+        results.Add(
+            new Result()
             {
-                _dataList.Clear();
-                CurrentScore = 1;
-                return true;
-            },
-        });
+                Title = "Clear All Records",
+                SubTitle = "Click to clear all records",
+                IcoPath = _defaultIconPath,
+                Score = 1,
+                Action = _ =>
+                {
+                    _dataList.Clear();
+                    CurrentScore = 1;
+                    return true;
+                },
+            }
+        );
         return results;
     }
 
@@ -98,23 +106,27 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
             Score = o.Score,
             TitleToolTip = o.Text,
             SubTitleToolTip = dispSubTitle,
-            PreviewPanel = new Lazy<UserControl>(() => new PreviewPanel(
-                o,
-                _context!,
-                ClipCacheDir,
-                delAction: RemoveFromDatalist,
-                copyAction: CopyToClipboard,
-                pinAction: PinOneRecord
-            )),
+            PreviewPanel = new Lazy<UserControl>(
+                () =>
+                    new PreviewPanel(
+                        o,
+                        _context!,
+                        ClipCacheDir,
+                        delAction: RemoveFromDatalist,
+                        copyAction: CopyToClipboard,
+                        pinAction: PinOneRecord
+                    )
+            ),
             AsyncAction = async _ =>
             {
                 CopyToClipboard(o);
                 _context!.API.HideMainWindow();
                 while (_context!.API.IsMainWindowVisible())
                     await Task.Delay(100);
-                new InputSimulator()
-                    .Keyboard
-                    .ModifiedKeyStroke(VirtualKeyCode.CONTROL, VirtualKeyCode.VK_V);
+                new InputSimulator().Keyboard.ModifiedKeyStroke(
+                    VirtualKeyCode.CONTROL,
+                    VirtualKeyCode.VK_V
+                );
                 return true;
             },
         };
@@ -122,7 +134,8 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 
     private void _OnClipboardChange(object? sender, SharpClipboard.ClipboardChangedEventArgs e)
     {
-        if (e.Content is null) return;
+        if (e.Content is null)
+            return;
         ClipboardData clipboardData = new ClipboardData
         {
             Text = "",
@@ -145,7 +158,8 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                 break;
             case SharpClipboard.ContentTypes.Image:
                 clipboardData.Text = $"Image:{clipboardData.Time:yy-MM-dd-HH:mm:ss}";
-                if (_settings.CacheImages) Utils.SaveImageCache(clipboardData, ClipCacheDir);
+                if (_settings.CacheImages)
+                    Utils.SaveImageCache(clipboardData, ClipCacheDir);
                 clipboardData.Icon = _clipboard.ClipboardImage.ToBitmapImage();
                 break;
             case SharpClipboard.ContentTypes.Files:
@@ -173,9 +187,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 
     public Control CreateSettingPanel() => new SettingsPanel(_settings, _context!);
 
-    public void Dispose()
-    {
-    }
+    public void Dispose() { }
 
     public void CopyToClipboard(ClipboardData clipboardData)
     {

@@ -116,7 +116,7 @@ public class PublishTask : FrostingTask<BuildContext>
         if (versionFile != null)
         {
             VersionInfo? versionInfoObj = JsonConvert.DeserializeObject<VersionInfo>(
-                File.ReadAllText(versionFile.ToString())
+                File.ReadAllText(versionFile.ToString()!)
             );
             if (versionInfoObj != null)
                 context.PublishVersion = versionInfoObj.Version;
