@@ -7,8 +7,8 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Cake.Compression" Version="0.3.0" />
-    <PackageReference Include="Cake.Frosting" Version="3.0.0" />
-    <PackageReference Include="SharpClipboard" Version="3.5.2" />
+    <PackageReference Include="Cake.Frosting" Version="3.1.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\src\ClipboardR\ClipboardR.csproj" />
