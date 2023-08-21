@@ -48,6 +48,7 @@ If you want to save images in your clipboard, open the `CacheImages` option in s
 ## Todo List
 
 - [x] Save images manually
+- [ ] Word Count
 - [ ] Cached images format definition
 - [ ] Image OCR
 
