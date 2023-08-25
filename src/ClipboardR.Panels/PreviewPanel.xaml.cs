@@ -7,7 +7,6 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using Flow.Launcher.Plugin;
 using ClipboardR.Core;
-using WK.Libraries.SharpClipboardNS;
 using Image = System.Drawing.Image;
 
 namespace ClipboardR.Panels;
@@ -46,20 +45,20 @@ public partial class PreviewPanel : UserControl
         PreImage.Visibility = Visibility.Hidden;
         switch (_clipboardData.Type)
         {
-            case SharpClipboard.ContentTypes.Text:
+            case CbMonitor.ContentTypes.Text:
                 SetText();
                 break;
-            case SharpClipboard.ContentTypes.Files:
+            case CbMonitor.ContentTypes.Files:
                 var ss = _clipboardData.Data as string[] ?? Array.Empty<string>();
                 var s = string.Join('\n', ss);
                 SetText(s);
                 break;
-            case SharpClipboard.ContentTypes.Image:
+            case CbMonitor.ContentTypes.Image:
                 TxtBoxPre.Visibility = Visibility.Hidden;
                 PreImage.Visibility = Visibility.Visible;
                 SetImage();
                 break;
-            case SharpClipboard.ContentTypes.Other:
+            case CbMonitor.ContentTypes.Other:
             default:
                 break;
         }

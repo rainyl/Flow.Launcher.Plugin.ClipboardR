@@ -40,7 +40,6 @@
     <PackageReference Include="Flow.Launcher.Plugin" Version="4.1.1" />
     <PackageReference Include="H.InputSimulator" Version="1.4.0">
     </PackageReference>
-    <PackageReference Include="SharpClipboard" Version="3.6.0" />
   </ItemGroup>
 
   <ItemGroup>

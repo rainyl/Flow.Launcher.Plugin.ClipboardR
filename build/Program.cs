@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Cake.Common;
 using Cake.Common.Diagnostics;
@@ -37,6 +39,7 @@ public class BuildContext : FrostingContext
     public const string DeployFramework = "net7.0-windows";
     public string PublishDir = ".dist";
     public string PublishVersion = "";
+    public string BuildFor = "win-x64"; // win-x64 win-x86
 
     public BuildContext(ICakeContext context)
         : base(context)
@@ -89,7 +92,7 @@ public class PublishTask : FrostingTask<BuildContext>
     public override void Run(BuildContext context)
     {
         var project = context.DefaultSln.Value.Projects.First(p => p.Name.EndsWith("ClipboardR"));
-        var srcDir = project.Path.GetDirectory().Combine(new DirectoryPath($"bin/publish"));
+        var srcDir = project.Path.GetDirectory().Combine(new DirectoryPath("bin/Publish"));
         var dstDir =
             $"{srcDir.GetParent().GetParent().GetParent().GetParent().FullPath}/{context.PublishDir}";
         context.DotNetPublish(
@@ -103,16 +106,51 @@ public class PublishTask : FrostingTask<BuildContext>
             }
         );
         context.CreateDirectory(dstDir);
-        var files = context.GetFiles(
-            @$"{srcDir}/**/(*(c|C)lipboard*.(png|json|dll)|*.png|plugin.json|(*simulator).dll)"
-        );
+
+        // var builder = context.DefaultSln.Value.Projects.First(p => p.Name.EndsWith("Build"));
+        // var midDir = builder.Path.GetDirectory().Combine(new DirectoryPath("bin/Publish"));
+        // if (context.DirectoryExists(midDir))
+        //     context.DeleteDirectory(midDir, new DeleteDirectorySettings { Recursive = true, Force = true });
+        // context.CreateDirectory(midDir);
+
+        // context.CopyDirectory(srcDir, midDir);
+
+        var ptn =
+            @"Clipboar.+\.dll|" +
+            @".+\.png|" +
+            @"plugin\.json|H\.InputSimulator\.dll|" +
+            @"SQLitePCLRaw.+\.dll|Microsoft.+(S|s)qlite\.dll";
+        var files = context.GetFiles($"{srcDir}/**/*");
         FilePath? versionFile = null;
         foreach (var f in files)
         {
-            context.Information($"Adding: {f}");
+            if (f == null || f.ToString().EndsWith("e_sqlite3.dll"))
+            {
+                files.Remove(f);
+                continue;
+            }
             if (f.ToString().EndsWith("plugin.json"))
                 versionFile = f;
+            if (!Regex.IsMatch(f.GetFilename().ToString(), ptn))
+            {
+                context.DeleteFile(f);
+                files.Remove(f);
+            }
+            else
+                context.Information($"Added: {f}");
         }
+
+        var eSqlite3Path = srcDir
+            .Combine($"runtimes")
+            .Combine($"{context.BuildFor}")
+            .Combine("native")
+            .CombineWithFilePath(new FilePath("e_sqlite3.dll"));
+        context.CopyFile(
+            eSqlite3Path,
+            srcDir.CombineWithFilePath("e_sqlite3.dll"));
+        files.Add(srcDir.CombineWithFilePath("e_sqlite3.dll"));
+        context.DeleteDirectory(srcDir.Combine("runtimes"), new DeleteDirectorySettings() { Recursive = true });
+
         if (versionFile != null)
         {
             VersionInfo? versionInfoObj = JsonConvert.DeserializeObject<VersionInfo>(
@@ -123,6 +161,7 @@ public class PublishTask : FrostingTask<BuildContext>
             else
                 Console.WriteLine("Get version info from plugin.json failed!");
         }
+
         context.ZipCompress(
             rootPath: srcDir,
             outputPath: $"{dstDir}/ClipboardR-v{context.PublishVersion}.zip",
@@ -151,7 +190,32 @@ public sealed class CleanTask : FrostingTask<BuildContext>
 [IsDependentOn(typeof(CleanTask))]
 [IsDependentOn(typeof(BuildTask))]
 [IsDependentOn(typeof(PublishTask))]
-public class DefaultTask : FrostingTask { }
+public class DefaultTask : FrostingTask
+{
+}
+
+[TaskName("Deploy")]
+public class DeployTask : FrostingTask<BuildContext>
+{
+    public override void Run(BuildContext context)
+    {
+        var builder = context.DefaultSln.Value.Projects.First(p => p.Name.EndsWith("Build"));
+        var distDir = builder.Path.GetDirectory().GetParent().Combine(new DirectoryPath(context.PublishDir));
+        var files = context.GetFiles($"{distDir}/ClipboardR*.zip");
+
+        DateTime t = DateTime.FromFileTime(0);
+        FilePath mostRecentFile = files.First();
+        foreach (var f in files)
+        {
+            if (File.GetCreationTime(f.FullPath) <= t) continue;
+            t = File.GetCreationTime(f.FullPath);
+            mostRecentFile = f;
+        }
+
+        context.Unzip(mostRecentFile,
+            new DirectoryPath(@"%APPDATA%/FlowLauncher/Plugins" + mostRecentFile.GetFilenameWithoutExtension()));
+    }
+}
 
 public class VersionInfo
 {

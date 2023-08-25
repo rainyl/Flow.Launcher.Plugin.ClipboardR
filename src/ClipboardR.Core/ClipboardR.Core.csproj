@@ -1,10 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0-windows</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Version>0.1.1</Version>
+        <UseWindowsForms>true</UseWindowsForms>
+        <TargetFramework>net7.0-windows</TargetFramework>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -18,7 +19,8 @@
 
     <ItemGroup>
       <PackageReference Include="Flow.Launcher.Plugin" Version="4.1.1" />
-      <PackageReference Include="SharpClipboard" Version="3.6.0" />
+      <PackageReference Include="Microsoft.Data.Sqlite" Version="7.0.10" />
     </ItemGroup>
+
 
 </Project>

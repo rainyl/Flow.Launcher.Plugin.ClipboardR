@@ -1,5 +1,4 @@
-﻿using System.Windows.Media;
-using WK.Libraries.SharpClipboardNS;
+﻿using System.Windows.Media.Imaging;
 
 namespace ClipboardR.Core;
 
@@ -10,9 +9,9 @@ public struct ClipboardData : IEquatable<ClipboardData>
     public string DisplayTitle;
     public string SenderApp;
     public string IconPath;
-    public ImageSource Icon;
-    public string PreviewImagePath;
-    public SharpClipboard.ContentTypes Type;
+    public BitmapImage Icon;
+    public string PreviewImagePath; // actually not used for now
+    public CbMonitor.ContentTypes Type;
     public int Score;
     public int InitScore;
     public DateTime Time;
@@ -29,5 +28,10 @@ public struct ClipboardData : IEquatable<ClipboardData>
         var hashcode = (Text?.GetHashCode() ?? 0) ^ (DisplayTitle?.GetHashCode() ?? 0) ^
                        (Data?.GetHashCode() ?? 0) ^ (SenderApp?.GetHashCode() ?? 0) ^ Type.GetHashCode();
         return hashcode;
+    }
+
+    public string GetMd5()
+    {
+        return Text.GetMd5() + DisplayTitle.GetMd5();
     }
 }
