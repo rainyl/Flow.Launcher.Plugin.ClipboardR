@@ -43,7 +43,7 @@ public class DbHelper
                  "display_title"	TEXT,
                  "senderapp"	TEXT,
                  "icon_path"	TEXT,
-                 "icon_id"	INTEGER,
+                 "icon_id"	TEXT,
                  "preview_image_path"	TEXT,
                  "content_type"	INTEGER,
                  "score"	INTEGER,
@@ -52,7 +52,8 @@ public class DbHelper
                  "create_time"	TEXT,
                  "pined"	INTEGER,
                  PRIMARY KEY("id" AUTOINCREMENT),
-                 FOREIGN KEY("icon_id") REFERENCES "assets"("md5")
+                 FOREIGN KEY("icon_id") REFERENCES "assets"("md5"),
+                 FOREIGN KEY("data") REFERENCES "assets"("md5")
                 );
             """;
         command.ExecuteNonQuery();
@@ -63,30 +64,24 @@ public class DbHelper
     public void AddOneRecord(ClipboardData data)
     {
         Connection.Open();
+        // insert image data to table assets
         var iconB64 = data.Icon.ToBase64();
         var iconMd5 = iconB64.GetMd5();
+        // insert data to table assets
+        string insertData = data.DataToString();
+        var dataMd5 = insertData.GetMd5();
         var command = Connection.CreateCommand();
-        command.CommandText = "INSERT OR IGNORE INTO assets(data_b64, md5) VALUES ($data_b64, $md5)";
+        command.CommandText = 
+            """
+            INSERT OR IGNORE INTO assets(data_b64, md5) VALUES ($data_b64, $md5);
+
+            INSERT OR IGNORE INTO assets(data_b64, md5) VALUES ($data_b64_data, $md5_data);
+            """;
         command.Parameters.AddWithValue("$data_b64", iconB64);
         command.Parameters.AddWithValue("$md5", iconMd5);
-        command.ExecuteNonQuery();
-        
-        string? insertData = "";
-        switch (data.Type)
-        {
-            case CbMonitor.ContentTypes.Text:
-                insertData = data.Data as string;
-                break;
-            case CbMonitor.ContentTypes.Image:
-                insertData = iconB64;
-                break;
-            case CbMonitor.ContentTypes.Files:
-                insertData = data.Data is not string[] t ? "" : string.Join('\n', t);
-                break;
-            default:
-                // don't process others
-                return;
-        }
+        command.Parameters.AddWithValue("$data_b64_data", insertData);
+        command.Parameters.AddWithValue("$md5_data", dataMd5);
+        command.ExecuteNonQueryAsync();
 
         command.CommandText =
             """
@@ -95,14 +90,14 @@ public class DbHelper
                                preview_image_path, content_type,
                                score, init_score, time,
                                create_time, pined)
-            VALUES ($hash_id, $data, $text, $display_title,
+            VALUES ($hash_id, $data_md5, $text, $display_title,
                    $senderapp, $icon_path, $icon,
                    $preview_image_path, $content_type,
                    $score, $init_score, $time,
                    $create_time, $pined);
             """;
         command.Parameters.AddWithValue("$hash_id", data.GetHashCode());
-        command.Parameters.AddWithValue("$data", insertData);
+        command.Parameters.AddWithValue("$data_md5", dataMd5);
         command.Parameters.AddWithValue("$text", data.Text);
         command.Parameters.AddWithValue("$display_title", data.DisplayTitle);
         command.Parameters.AddWithValue("$senderapp", data.SenderApp);
@@ -116,7 +111,7 @@ public class DbHelper
         command.Parameters.AddWithValue("$create_time", data.CreateTime);
         command.Parameters.AddWithValue("$pined", data.Pined);
 
-        command.ExecuteNonQuery();
+        command.ExecuteNonQueryAsync();
         CloseIfNotKeep();
     }
 
@@ -124,9 +119,16 @@ public class DbHelper
     {
         Connection.Open();
         var command = Connection.CreateCommand();
-        command.CommandText = "DELETE from record WHERE hash_id == $hash_id";
+        var dataMd5 = clipboardData.DataToString().GetMd5();
+        command.CommandText = 
+            """
+                DELETE from record WHERE hash_id=$hash_id OR data=$md5;
+
+                DELETE from assets WHERE md5=$md5;
+            """;
         command.Parameters.AddWithValue("$hash_id", clipboardData.GetHashCode());
-        command.ExecuteNonQuery();
+        command.Parameters.AddWithValue("$md5", dataMd5);
+        command.ExecuteNonQueryAsync();
         CloseIfNotKeep();
     }
 
@@ -134,7 +136,7 @@ public class DbHelper
     {
         Connection.Open();
         var command = Connection.CreateCommand();
-        command.CommandText = "UPDATE record SET pined=$pined WHERE hash_id == $hash_id";
+        command.CommandText = "UPDATE record SET pined=$pined WHERE hash_id=$hash_id";
         command.Parameters.AddWithValue("$pined", clipboardData.Pined);
         command.Parameters.AddWithValue("$hash_id", clipboardData.GetHashCode());
         command.ExecuteNonQuery();
@@ -146,10 +148,15 @@ public class DbHelper
         Connection.Open();
         var command = Connection.CreateCommand();
         command.CommandText =
-            "SELECT r.data, r.text, r.display_title, r.senderapp, r.icon_path, " +
-            "a.data_b64, r.preview_image_path, r.content_type,score, r.init_score, " +
-            "r.time, r.create_time, r.pined " +
-            "FROM record r, assets a WHERE r.icon_id=a.md5";
+            """
+            SELECT a.data_b64 as data, r.text, r.display_title, r.senderapp, r.icon_path, 
+                   b.data_b64, r.preview_image_path, r.content_type,score, r.init_score, 
+                   r.time, r.create_time, r.pined 
+                   FROM record r 
+                   LEFT JOIN assets a ON r.data=a.md5
+                   LEFT JOIN assets b ON r.icon_id=b.md5;
+            """;
+        // command.Parameters.AddWithValue("$image_type", CbMonitor.ContentTypes.Image);
         LinkedList<ClipboardData> allRecord = new();
         using var reader = command.ExecuteReader();
         while (reader.Read())
@@ -199,8 +206,21 @@ public class DbHelper
     {
         Connection.Open();
         var command = Connection.CreateCommand();
-        command.CommandText = "DELETE FROM record WHERE julianday(create_time) + $keepTime / 24 < julianday('now')";
+        command.CommandText = 
+            """
+                DELETE FROM assets 
+                       WHERE EXISTS(
+                       SELECT id from record
+                            WHERE julianday(create_time) + $keepTime / 24 < julianday('now')
+                            AND content_type=$content_type
+                            AND (assets.md5=record.data OR assets.md5=record.icon_id));
+
+                DELETE FROM record 
+                       WHERE julianday(create_time) + $keepTime / 24 < julianday('now')
+                       AND content_type=$content_type;
+            """;
         command.Parameters.AddWithValue("$keepTime", keepTime);
+        command.Parameters.AddWithValue("$content_type", contentType);
         command.ExecuteNonQuery();
         CloseIfNotKeep();
     }
@@ -214,6 +234,6 @@ public class DbHelper
     private void CloseIfNotKeep()
     {
         if (!KeepConnection)
-            Connection.Close();
+            Connection.CloseAsync();
     }
 }

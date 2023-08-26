@@ -34,4 +34,28 @@ public struct ClipboardData : IEquatable<ClipboardData>
     {
         return Text.GetMd5() + DisplayTitle.GetMd5();
     }
+
+    public string DataToString()
+    {
+        string? dataString;
+        switch (Type)
+        {
+            case CbMonitor.ContentTypes.Text:
+                dataString = Data as string;
+                break;
+            case CbMonitor.ContentTypes.Image:
+                var im = Data as Image;
+                dataString = im?.ToBase64();
+                break;
+            case CbMonitor.ContentTypes.Files:
+                dataString = Data is not string[] t ? "" : string.Join('\n', t);
+                break;
+            default:
+                // don't process others
+                throw new NotImplementedException(
+                    "Data to string for type not in Text, Image, Files are not implemented now.");
+        }
+
+        return dataString ?? "";
+    }
 }

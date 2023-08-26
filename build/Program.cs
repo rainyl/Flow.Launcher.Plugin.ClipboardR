@@ -124,12 +124,13 @@ public class PublishTask : FrostingTask<BuildContext>
         FilePath? versionFile = null;
         foreach (var f in files)
         {
-            if (f == null || f.ToString().EndsWith("e_sqlite3.dll"))
+            var fstr = f.ToString();
+            if (f == null || (fstr.EndsWith("e_sqlite3.dll") && ! fstr.EndsWith(".e_sqlite3.dll")))
             {
                 files.Remove(f);
                 continue;
             }
-            if (f.ToString().EndsWith("plugin.json"))
+            if (fstr.EndsWith("plugin.json"))
                 versionFile = f;
             if (!Regex.IsMatch(f.GetFilename().ToString(), ptn))
             {

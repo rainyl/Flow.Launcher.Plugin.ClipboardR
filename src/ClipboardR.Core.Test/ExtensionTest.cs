@@ -46,4 +46,13 @@ public class ExtensionTest
         var img1 = s.ToImage();
         var imgBitmap = s.ToBitmapImage();
     }
+
+    [Theory]
+    [InlineData("", "D41D8CD98F00B204E9800998ECF8427E")]
+    [InlineData("Test", "0CBC6611F5540BD0809A388DC95A615B")]
+    public void TestStringToMd5(string s, string md5)
+    {
+        _testOutputHelper.WriteLine(s.GetMd5());
+        Assert.True(s.GetMd5() == md5);
+    }
 }

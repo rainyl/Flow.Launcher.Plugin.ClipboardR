@@ -25,7 +25,7 @@ public static class ClipImageExtension
     public static string ToBase64(this Image img)
     {
         using var m = new MemoryStream();
-        img.Save(m, img.RawFormat);
+        img.Save(m, ImageFormat.Png);
         return Convert.ToBase64String(m.ToArray());
     }
 
