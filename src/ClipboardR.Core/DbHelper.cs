@@ -113,7 +113,7 @@ public class DbHelper
     {
         var dataMd5 = clipboardData.DataToString().GetMd5();
         var sql = "SELECT COUNT() FROM record WHERE data_md5=@DataMd5;";
-        var count = await Connection.QueryFirstAsync<int>(sql);
+        var count = await Connection.QueryFirstAsync<int>(sql, new {DataMd5=dataMd5});
         // count > 1  means there are more than one record in table `record`
         // depends on corresponding record in table `assets`, in this condition,
         // we only delete record in table `record`
