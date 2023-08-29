@@ -84,38 +84,6 @@ public class CbMonitor
         SetDefaults();
     }
 
-
-    #region Enumerations
-
-    /// <summary>
-    /// Provides a list of the supported clipboard content types.
-    /// </summary>
-    public enum ContentTypes
-    {
-        /// <summary>
-        /// Represents <see cref="String"/> content.
-        /// </summary>
-        Text = 0,
-
-        /// <summary>
-        /// Represents <see cref="Image"/> content.
-        /// </summary>
-        Image = 1,
-
-        /// <summary>
-        /// Represents content as a <see cref="List{String}"/> of files.
-        /// </summary>
-        Files = 2,
-
-        /// <summary>
-        /// Represents any complex objects.
-        /// </summary>
-        Other = 3
-    }
-
-    #endregion
-
-
     #region Methods
 
     #region Public
@@ -166,7 +134,7 @@ public class CbMonitor
         ObserveLastEntry = true;
     }
 
-    internal void Invoke(object? content, ContentTypes type, SourceApplication source)
+    internal void Invoke(object? content, CbContentType type, SourceApplication source)
     {
         ClipboardChanged?.Invoke(this, new ClipboardChangedEventArgs(content, type, source));
     }
@@ -204,7 +172,7 @@ public class CbMonitor
     /// </summary>
     public class ClipboardChangedEventArgs : EventArgs
     {
-        public ClipboardChangedEventArgs(object? content, ContentTypes contentType, SourceApplication source)
+        public ClipboardChangedEventArgs(object? content, CbContentType contentType, SourceApplication source)
         {
             Content = content;
             ContentType = contentType;
@@ -223,7 +191,7 @@ public class CbMonitor
         /// <summary>
         /// Gets the currently copied clipboard content-type.
         /// </summary>
-        public ContentTypes ContentType { get; }
+        public CbContentType ContentType { get; }
 
         /// <summary>
         /// Gets the application from where the

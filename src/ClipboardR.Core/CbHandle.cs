@@ -117,14 +117,59 @@ public partial class CbHandle : Form
     private void OnDrawClipboardChanged()
     {
         // If clipboard-monitoring is enabled, proceed to listening.
-        if (!Ready || !CbMonitorInstance.MonitorClipboard) return;
-        var dataObj = Retry.Do(() => { return Clipboard.GetDataObject(); }, 100, 5);
+        if (!Ready || !CbMonitorInstance.MonitorClipboard)
+            return;
+        var dataObj = Retry.Do(Clipboard.GetDataObject, 100, 5);
         if (dataObj is null)
             return;
         try
         {
             // Determines whether a file/files have been cut/copied.
             if (
+                CbMonitorInstance.ObservableFormats.Images
+                && dataObj.GetDataPresent(DataFormats.Bitmap)
+            )
+            {
+                var capturedImage = dataObj.GetData(DataFormats.Bitmap) as Image;
+                CbMonitorInstance.ClipboardImage = capturedImage;
+
+                CbMonitorInstance.Invoke(
+                    capturedImage,
+                    CbContentType.Image,
+                    new SourceApplication(
+                        GetForegroundWindow(),
+                        CbMonitorInstance.ForegroundWindowHandle(),
+                        GetApplicationName(),
+                        GetActiveWindowTitle(),
+                        GetApplicationPath()
+                    )
+                );
+            }
+            // Determines whether text has been cut/copied.
+            else if (
+                CbMonitorInstance.ObservableFormats.Texts
+                && (
+                    dataObj.GetDataPresent(DataFormats.Text)
+                    || dataObj.GetDataPresent(DataFormats.UnicodeText)
+                )
+            )
+            {
+                var capturedText = dataObj.GetData(DataFormats.UnicodeText) as string;
+                CbMonitorInstance.ClipboardText = capturedText ?? "";
+
+                CbMonitorInstance.Invoke(
+                    capturedText,
+                    CbContentType.Text,
+                    new SourceApplication(
+                        GetForegroundWindow(),
+                        CbMonitorInstance.ForegroundWindowHandle(),
+                        GetApplicationName(),
+                        GetActiveWindowTitle(),
+                        GetApplicationPath()
+                    )
+                );
+            }
+            else if (
                 CbMonitorInstance.ObservableFormats.Files
                 && dataObj.GetDataPresent(DataFormats.FileDrop)
             )
@@ -141,7 +186,7 @@ public partial class CbHandle : Form
 
                     CbMonitorInstance.Invoke(
                         dataObj,
-                        CbMonitor.ContentTypes.Other,
+                        CbContentType.Other,
                         new SourceApplication(
                             GetForegroundWindow(),
                             CbMonitorInstance.ForegroundWindowHandle(),
@@ -160,7 +205,7 @@ public partial class CbHandle : Form
 
                     CbMonitorInstance.Invoke(
                         capturedFiles,
-                        CbMonitor.ContentTypes.Files,
+                        CbContentType.Files,
                         new SourceApplication(
                             GetForegroundWindow(),
                             CbMonitorInstance.ForegroundWindowHandle(),
@@ -171,51 +216,6 @@ public partial class CbHandle : Form
                     );
                 }
             }
-            // Determines whether text has been cut/copied.
-            else if (
-                CbMonitorInstance.ObservableFormats.Texts
-                && (
-                    dataObj.GetDataPresent(DataFormats.Text)
-                    || dataObj.GetDataPresent(DataFormats.UnicodeText)
-                )
-            )
-            {
-                var capturedText = dataObj.GetData(DataFormats.UnicodeText) as string;
-                CbMonitorInstance.ClipboardText = capturedText ?? "";
-
-                CbMonitorInstance.Invoke(
-                    capturedText,
-                    CbMonitor.ContentTypes.Text,
-                    new SourceApplication(
-                        GetForegroundWindow(),
-                        CbMonitorInstance.ForegroundWindowHandle(),
-                        GetApplicationName(),
-                        GetActiveWindowTitle(),
-                        GetApplicationPath()
-                    )
-                );
-            }
-            // Determines whether an image has been cut/copied.
-            else if (
-                CbMonitorInstance.ObservableFormats.Images
-                && dataObj.GetDataPresent(DataFormats.Bitmap)
-            )
-            {
-                var capturedImage = dataObj.GetData(DataFormats.Bitmap) as Image;
-                CbMonitorInstance.ClipboardImage = capturedImage;
-
-                CbMonitorInstance.Invoke(
-                    capturedImage,
-                    CbMonitor.ContentTypes.Image,
-                    new SourceApplication(
-                        GetForegroundWindow(),
-                        CbMonitorInstance.ForegroundWindowHandle(),
-                        GetApplicationName(),
-                        GetActiveWindowTitle(),
-                        GetApplicationPath()
-                    )
-                );
-            }
             // Determines whether a complex object has been cut/copied.
             else if (
                 CbMonitorInstance.ObservableFormats.Others
@@ -224,7 +224,7 @@ public partial class CbHandle : Form
             {
                 CbMonitorInstance.Invoke(
                     dataObj,
-                    CbMonitor.ContentTypes.Other,
+                    CbContentType.Other,
                     new SourceApplication(
                         GetForegroundWindow(),
                         CbMonitorInstance.ForegroundWindowHandle(),
@@ -241,9 +241,7 @@ public partial class CbHandle : Form
             // Applications with Administrative privileges can however override
             // this exception when run in a production environment.
         }
-        catch (NullReferenceException)
-        {
-        }
+        catch (NullReferenceException) { }
     }
 
     #endregion
@@ -299,8 +297,9 @@ public partial class CbHandle : Form
             var processModule = Process.GetProcessById(GetProcessId(hwnd)).MainModule;
             if (processModule != null)
                 _executablePath = processModule.FileName;
-            _executableName =
-                _executablePath.Substring(_executablePath.LastIndexOf(@"\", StringComparison.Ordinal) + 1);
+            _executableName = _executablePath.Substring(
+                _executablePath.LastIndexOf(@"\", StringComparison.Ordinal) + 1
+            );
         }
         catch (Exception)
         {
@@ -319,7 +318,6 @@ public partial class CbHandle : Form
     {
         const int capacity = 256;
         StringBuilder content = new StringBuilder(capacity);
-        ;
         IntPtr handle = IntPtr.Zero;
 
         try

@@ -4,35 +4,43 @@ namespace ClipboardR.Core;
 
 public struct ClipboardData : IEquatable<ClipboardData>
 {
-    public object Data;
-    public string Text;
-    public string DisplayTitle;
-    public string SenderApp;
-    public string IconPath;
-    public BitmapImage Icon;
-    public string PreviewImagePath; // actually not used for now
-    public CbMonitor.ContentTypes Type;
-    public int Score;
-    public int InitScore;
-    public DateTime Time;
-    public bool Pined;
-    public DateTime CreateTime;
+    public required string HashId;
+    public required object Data;
+    public required string Text;
+    public required string DisplayTitle;
+    public required string SenderApp;
+    public required string IconPath;
+    public required BitmapImage Icon;
+    public required string PreviewImagePath; // actually not used for now
+    public required CbContentType Type;
+    public required int Score;
+    public required int InitScore;
+    public required DateTime Time;
+    public required bool Pined;
+    public required DateTime CreateTime;
 
     public bool Equals(ClipboardData b)
     {
-        return GetHashCode() == b.GetHashCode();
+        return HashId == b.HashId;
     }
 
     public override int GetHashCode()
     {
-        var hashcode = (Text?.GetHashCode() ?? 0) ^ (DisplayTitle?.GetHashCode() ?? 0) ^
-                       (Data?.GetHashCode() ?? 0) ^ (SenderApp?.GetHashCode() ?? 0) ^ Type.GetHashCode();
+        var hashcode =
+            Text.GetHashCode()
+            ^ DisplayTitle.GetHashCode()
+            ^ SenderApp.GetHashCode()
+            ^ Type.GetHashCode();
         return hashcode;
     }
 
+    public static bool operator == (ClipboardData a, ClipboardData b) => a.HashId == b.HashId;
+
+    public static bool operator !=(ClipboardData a, ClipboardData b) => a.HashId != b.HashId;
+
     public string GetMd5()
     {
-        return Text.GetMd5() + DisplayTitle.GetMd5();
+        return DataToString().GetMd5();
     }
 
     public string DataToString()
@@ -40,22 +48,27 @@ public struct ClipboardData : IEquatable<ClipboardData>
         string? dataString;
         switch (Type)
         {
-            case CbMonitor.ContentTypes.Text:
+            case CbContentType.Text:
                 dataString = Data as string;
                 break;
-            case CbMonitor.ContentTypes.Image:
-                var im = Data as Image;
-                dataString = im?.ToBase64();
+            case CbContentType.Image:
+                dataString = Data is not Image im ? Icon.ToBase64() : im.ToBase64();
                 break;
-            case CbMonitor.ContentTypes.Files:
-                dataString = Data is not string[] t ? "" : string.Join('\n', t);
+            case CbContentType.Files:
+                dataString = Data is string[] t ? string.Join('\n', t) : Data as string;
                 break;
             default:
                 // don't process others
                 throw new NotImplementedException(
-                    "Data to string for type not in Text, Image, Files are not implemented now.");
+                    "Data to string for type not in Text, Image, Files are not implemented now."
+                );
         }
 
         return dataString ?? "";
+    }
+
+    public override string ToString()
+    {
+        return $"ClipboardDate(type: {Type}, text: {Text}, ctime: {CreateTime})";
     }
 }

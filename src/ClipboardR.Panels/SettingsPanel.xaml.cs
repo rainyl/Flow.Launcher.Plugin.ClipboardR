@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using Flow.Launcher.Plugin;
@@ -10,6 +12,7 @@ public partial class SettingsPanel
 {
     public Settings settings { get; set; }
     private PluginInitContext? _context { get; set; }
+    private bool Ready { get; set; } = false;
 
     public static readonly DependencyProperty MaxDataCountProperty = DependencyProperty.Register(
         nameof(MaxDataCount), typeof(int), typeof(SettingsPanel), new PropertyMetadata(default(int)));
@@ -21,16 +24,72 @@ public partial class SettingsPanel
         {
             SetValue(MaxDataCountProperty, value);
             settings.MaxDataCount = value;
-            SpinBoxMaxRec.Value = value;
+            SpinBoxMaxRec.Value = Convert.ToInt32(value);
+        }
+    }
+
+    public static readonly DependencyProperty OrderByProperty = DependencyProperty.Register(
+        nameof(OrderBy), typeof(int), typeof(SettingsPanel), new PropertyMetadata(default(int)));
+
+    public int OrderBy
+    {
+        get => settings.OrderBy;
+        set
+        {
+            SetValue(OrderByProperty, value);
+            CmBoxOrderBy.SelectedIndex = value;
         }
     }
     
+    public static readonly DependencyProperty KeepTextHoursProperty = DependencyProperty.Register(
+        nameof(KeepTextHours), typeof(int), typeof(SettingsPanel), new PropertyMetadata(default(int)));
+
+    public int KeepTextHours
+    {
+        get => settings.KeepTextHours;
+        set
+        {
+            SetValue(KeepTextHoursProperty, value);
+            CmBoxKeepText.SelectedIndex = value;
+        }
+    }
+    
+    public static readonly DependencyProperty KeepImageHoursProperty = DependencyProperty.Register(
+        nameof(KeepImageHours), typeof(int), typeof(SettingsPanel), new PropertyMetadata(default(int)));
+
+    public int KeepImageHours
+    {
+        get => settings.KeepImageHours;
+        set
+        {
+            SetValue(KeepImageHoursProperty, value);
+            CmBoxKeepImages.SelectedIndex = value;
+        }
+    }
+    
+    public static readonly DependencyProperty KeepFileHoursProperty = DependencyProperty.Register(
+        nameof(KeepFileHours), typeof(int), typeof(SettingsPanel), new PropertyMetadata(default(int)));
+
+    public int KeepFileHours
+    {
+        get => settings.KeepImageHours;
+        set
+        {
+            SetValue(KeepFileHoursProperty, value);
+            CmBoxKeepFiles.SelectedIndex = value;
+        }
+    }
+
     public SettingsPanel(Settings settings, PluginInitContext ctx)
     {
         this.settings = settings;
         _context = ctx;
         InitializeComponent();
+        Ready = true;
         MaxDataCount = settings.MaxDataCount;
+        KeepTextHours = settings.KeepTextHours;
+        KeepImageHours = settings.KeepImageHours;
+        KeepFileHours = settings.KeepFileHours;
     }
 
     /// <summary>
@@ -39,11 +98,18 @@ public partial class SettingsPanel
     /// </summary>
     public SettingsPanel()
     {
-        this.settings = new Settings(){ConfigFile = "test.json"};
+        // this.settings = new Settings(){ConfigFile = "test.json"};
+        // settings.Save();
+        settings = Settings.Load("test.json");
         _context = null;
         InitializeComponent();
+        Ready = true;
         MaxDataCount = settings.MaxDataCount;
-        // SpinBoxMaxRec.ValueChanged += i => MessageBox.Show($"{i}");
+        KeepTextHours = settings.KeepTextHours;
+        KeepImageHours = settings.KeepImageHours;
+        KeepFileHours = settings.KeepFileHours;
+        OrderBy = settings.OrderBy;
+        Console.WriteLine(settings);
     }
 
     private void CkBoxCacheImages_OnChecked(object sender, RoutedEventArgs e)
@@ -59,7 +125,7 @@ public partial class SettingsPanel
 
     private void SpinBoxMaxRec_OnValueChanged(int v)
     {
-        MaxDataCount = v;
+        MaxDataCount = int.Max(v, 0);
     }
 
     private void CkBoxKeepText_OnChecked(object sender, RoutedEventArgs e)
@@ -74,37 +140,42 @@ public partial class SettingsPanel
 
     private void CkBoxKeepImages_OnChecked(object sender, RoutedEventArgs e)
     {
-        settings.KeepImages = true;
+        settings.KeepImage = true;
     }
 
     private void CkBoxKeepImages_OnUnchecked(object sender, RoutedEventArgs e)
     {
-        settings.KeepImages = false;
+        settings.KeepImage = false;
     }
 
     private void CkBoxKeepFiles_OnChecked(object sender, RoutedEventArgs e)
     {
-        settings.KeepFiles = true;
+        settings.KeepFile = true;
     }
 
     private void CkBoxKeepFiles_OnUnchecked(object sender, RoutedEventArgs e)
     {
-        settings.KeepFiles = false;
+        settings.KeepFile = false;
     }
 
+    private void CmBoxOrderBy_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (Ready) settings.OrderBy = CmBoxOrderBy.SelectedIndex;
+    }
+    
     private void CmBoxKeepText_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        settings.KeepTextHours = TryGetCBoxTag(sender);
+        if (Ready) settings.KeepTextHours = CmBoxKeepText.SelectedIndex;
     }
 
     private void CmBoxKeepImages_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        settings.KeepImagesHours = TryGetCBoxTag(sender);
+        if (Ready) settings.KeepImageHours = CmBoxKeepImages.SelectedIndex;
     }
 
     private void CmBoxKeepFiles_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        settings.KeepFilesHours = TryGetCBoxTag(sender);
+        if (Ready) settings.KeepFileHours = CmBoxKeepFiles.SelectedIndex;
     }
 
     private uint TryGetCBoxTag(object sender)

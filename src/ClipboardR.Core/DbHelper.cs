@@ -1,4 +1,7 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
+using System.Globalization;
+using Dapper;
 using Microsoft.Data.Sqlite;
 
 namespace ClipboardR.Core;
@@ -7,233 +10,276 @@ public class DbHelper
 {
     public SqliteConnection Connection { get; private set; }
     public bool KeepConnection { get; private set; }
+    private string SqlCheckTableRecord = "SELECT name from sqlite_master WHERE name='record'";
+
+    private string SqlCreateDb = """
+        CREATE TABLE assets (
+            id	INTEGER NOT NULL UNIQUE,
+            data_b64	TEXT,
+            md5 TEXT UNIQUE ,
+            PRIMARY KEY("id" AUTOINCREMENT)
+        );
+
+        CREATE TABLE "record" (
+            "id"	INTEGER NOT NULL UNIQUE,
+            "hash_id"	TEXT UNIQUE,
+            "data_md5"	TEXT,
+            "text"	TEXT,
+            "display_title"	TEXT,
+            "senderapp"	TEXT,
+            "icon_path"	TEXT,
+            "icon_md5"	TEXT,
+            "preview_image_path"	TEXT,
+            "content_type"	INTEGER,
+            "score"	INTEGER,
+            "init_score"	INTEGER,
+            "time"	TEXT,
+            "create_time"	TEXT,
+            "pined"	INTEGER,
+            PRIMARY KEY("id" AUTOINCREMENT),
+            FOREIGN KEY("icon_md5") REFERENCES "assets"("md5"),
+            FOREIGN KEY("data_md5") REFERENCES "assets"("md5") ON DELETE CASCADE
+        );
+        """;
 
     public DbHelper(SqliteConnection connection)
     {
         this.Connection = connection;
     }
 
-    public DbHelper(string dbPath, bool keepConnection = true)
+    public DbHelper(
+        string dbPath,
+        SqliteCacheMode cache = SqliteCacheMode.Shared,
+        SqliteOpenMode mode = SqliteOpenMode.ReadWriteCreate,
+        bool keepConnection = true
+    )
     {
-        this.Connection = new SqliteConnection(dbPath);
+        var connString = new SqliteConnectionStringBuilder()
+        {
+            DataSource = dbPath,
+            Mode = mode,
+            ForeignKeys = true,
+            Cache = cache,
+        }.ToString();
+        this.Connection = new SqliteConnection(connString);
         this.KeepConnection = keepConnection;
     }
 
-    public bool CreateDb()
+    public void CreateDb()
     {
         Connection.Open();
-        var command = Connection.CreateCommand();
-        command.CommandText = "SELECT name from sqlite_master WHERE name='record'";
-        if (command.ExecuteScalar() is "record")
-            return true;
-        command.CommandText =
-            """
-                CREATE TABLE assets (
-                 id	INTEGER NOT NULL UNIQUE,
-                 data_b64	TEXT,
-                 md5 TEXT UNIQUE ,
-                 PRIMARY KEY("id" AUTOINCREMENT)
-                );
-            
-                CREATE TABLE "record" (
-                 "id"	INTEGER NOT NULL UNIQUE,
-                 "hash_id"	TEXT UNIQUE,
-                 "data"	TEXT,
-                 "text"	TEXT,
-                 "display_title"	TEXT,
-                 "senderapp"	TEXT,
-                 "icon_path"	TEXT,
-                 "icon_id"	TEXT,
-                 "preview_image_path"	TEXT,
-                 "content_type"	INTEGER,
-                 "score"	INTEGER,
-                 "init_score"	INTEGER,
-                 "time"	TEXT,
-                 "create_time"	TEXT,
-                 "pined"	INTEGER,
-                 PRIMARY KEY("id" AUTOINCREMENT),
-                 FOREIGN KEY("icon_id") REFERENCES "assets"("md5"),
-                 FOREIGN KEY("data") REFERENCES "assets"("md5")
-                );
-            """;
-        command.ExecuteNonQuery();
+        var name = Connection.QueryFirstOrDefault<string>(SqlCheckTableRecord);
+        if (name == "record")
+            return;
+        var r = Connection.Execute(SqlCreateDb);
         CloseIfNotKeep();
-        return true;
     }
 
-    public void AddOneRecord(ClipboardData data)
+    public async void AddOneRecord(ClipboardData data)
     {
         Connection.Open();
+        var sql = "INSERT OR IGNORE INTO assets(data_b64, md5) VALUES (@DataB64, @Md5);";
         // insert image data to table assets
         var iconB64 = data.Icon.ToBase64();
         var iconMd5 = iconB64.GetMd5();
         // insert data to table assets
-        string insertData = data.DataToString();
-        var dataMd5 = insertData.GetMd5();
-        var command = Connection.CreateCommand();
-        command.CommandText = 
-            """
-            INSERT OR IGNORE INTO assets(data_b64, md5) VALUES ($data_b64, $md5);
-
-            INSERT OR IGNORE INTO assets(data_b64, md5) VALUES ($data_b64_data, $md5_data);
-            """;
-        command.Parameters.AddWithValue("$data_b64", iconB64);
-        command.Parameters.AddWithValue("$md5", iconMd5);
-        command.Parameters.AddWithValue("$data_b64_data", insertData);
-        command.Parameters.AddWithValue("$md5_data", dataMd5);
-        command.ExecuteNonQueryAsync();
-
-        command.CommandText =
-            """
-            INSERT OR IGNORE INTO record(hash_id, data, text, display_title,
-                               senderapp, icon_path, icon_id,
-                               preview_image_path, content_type,
-                               score, init_score, time,
-                               create_time, pined)
-            VALUES ($hash_id, $data_md5, $text, $display_title,
-                   $senderapp, $icon_path, $icon,
-                   $preview_image_path, $content_type,
-                   $score, $init_score, $time,
-                   $create_time, $pined);
-            """;
-        command.Parameters.AddWithValue("$hash_id", data.GetHashCode());
-        command.Parameters.AddWithValue("$data_md5", dataMd5);
-        command.Parameters.AddWithValue("$text", data.Text);
-        command.Parameters.AddWithValue("$display_title", data.DisplayTitle);
-        command.Parameters.AddWithValue("$senderapp", data.SenderApp);
-        command.Parameters.AddWithValue("$icon_path", data.IconPath);
-        command.Parameters.AddWithValue("$icon", iconMd5);
-        command.Parameters.AddWithValue("$preview_image_path", data.PreviewImagePath);
-        command.Parameters.AddWithValue("$content_type", data.Type);
-        command.Parameters.AddWithValue("$score", data.Score);
-        command.Parameters.AddWithValue("$init_score", data.InitScore);
-        command.Parameters.AddWithValue("$time", data.Time);
-        command.Parameters.AddWithValue("$create_time", data.CreateTime);
-        command.Parameters.AddWithValue("$pined", data.Pined);
-
-        command.ExecuteNonQueryAsync();
-        CloseIfNotKeep();
-    }
-
-    public void DeleteOneRecord(ClipboardData clipboardData)
-    {
-        Connection.Open();
-        var command = Connection.CreateCommand();
-        var dataMd5 = clipboardData.DataToString().GetMd5();
-        command.CommandText = 
-            """
-                DELETE from record WHERE hash_id=$hash_id OR data=$md5;
-
-                DELETE from assets WHERE md5=$md5;
-            """;
-        command.Parameters.AddWithValue("$hash_id", clipboardData.GetHashCode());
-        command.Parameters.AddWithValue("$md5", dataMd5);
-        command.ExecuteNonQueryAsync();
-        CloseIfNotKeep();
-    }
-
-    public void PinOneRecord(ClipboardData clipboardData)
-    {
-        Connection.Open();
-        var command = Connection.CreateCommand();
-        command.CommandText = "UPDATE record SET pined=$pined WHERE hash_id=$hash_id";
-        command.Parameters.AddWithValue("$pined", clipboardData.Pined);
-        command.Parameters.AddWithValue("$hash_id", clipboardData.GetHashCode());
-        command.ExecuteNonQuery();
-        CloseIfNotKeep();
-    }
-
-    public LinkedList<ClipboardData> GetAllRecord()
-    {
-        Connection.Open();
-        var command = Connection.CreateCommand();
-        command.CommandText =
-            """
-            SELECT a.data_b64 as data, r.text, r.display_title, r.senderapp, r.icon_path, 
-                   b.data_b64, r.preview_image_path, r.content_type,score, r.init_score, 
-                   r.time, r.create_time, r.pined 
-                   FROM record r 
-                   LEFT JOIN assets a ON r.data=a.md5
-                   LEFT JOIN assets b ON r.icon_id=b.md5;
-            """;
-        // command.Parameters.AddWithValue("$image_type", CbMonitor.ContentTypes.Image);
-        LinkedList<ClipboardData> allRecord = new();
-        using var reader = command.ExecuteReader();
-        while (reader.Read())
-        {
-            var type = (CbMonitor.ContentTypes)Convert.ToInt32(reader.GetValue(7));
-            
-            var clipboardData = new ClipboardData
+        string dataB64 = data.DataToString();
+        var dataMd5 = dataB64.GetMd5();
+        var rows = await Connection.ExecuteAsync(
+            sql,
+            new List<Assets>
             {
-                Data = reader.GetString(0),
-                Text = reader.GetString(1),
-                DisplayTitle = reader.GetString(2),
-                SenderApp = reader.GetString(3),
-                IconPath = reader.GetString(4),
-                Icon = reader.GetString(5).ToBitmapImage(),
-                PreviewImagePath = reader.GetString(6),
-                Type = type,
-                Score = reader.GetInt32(8),
-                InitScore = reader.GetInt32(9),
-                Time = reader.GetDateTime(10),
-                CreateTime = reader.GetDateTime(11),
-                Pined = reader.GetBoolean(12),
-            };
-            switch (type)
-            {
-                case CbMonitor.ContentTypes.Text:
-                    clipboardData.Data = (clipboardData.Data as string)!;
-                    break;
-                case CbMonitor.ContentTypes.Image:
-                    clipboardData.Data = (clipboardData.Data as string)!.ToImage();
-                    break;
-                case CbMonitor.ContentTypes.Files:
-                    var t = (clipboardData.Data as string)!;
-                    clipboardData.Data = t.Split('\n');
-                    break;
-                default:
-                    break;
+                new() { DataB64 = iconB64, Md5 = iconMd5 },
+                new() { DataB64 = dataB64, Md5 = dataMd5 },
             }
-            allRecord.AddLast(clipboardData);
-        }
+        );
 
+        sql =
+            @"INSERT OR IGNORE INTO record(
+                    hash_id, data_md5, text, display_title, senderapp, 
+                    icon_path, icon_md5, preview_image_path, content_type,
+                    score, init_score, 'time', create_time, pined) 
+                VALUES (
+                    @HashId, @DataMd5, @Text, @DisplayTitle, @SenderApp, 
+                    @IconPath, @IconMd5, @PreviewImagePath, @ContentType,
+                    @Score, @InitScore, @Time, @CreateTime, @Pined);";
+        var record = Record.FromClipboardData(data);
+
+        var r = await Connection.ExecuteAsync(sql, record);
         CloseIfNotKeep();
+    }
 
+    public async void DeleteOneRecord(ClipboardData clipboardData)
+    {
+        var dataMd5 = clipboardData.DataToString().GetMd5();
+        var sql = "SELECT COUNT() FROM record WHERE data_md5=@DataMd5;";
+        var count = await Connection.QueryFirstAsync<int>(sql);
+        // count > 1  means there are more than one record in table `record`
+        // depends on corresponding record in table `assets`, in this condition,
+        // we only delete record in table `record`
+        sql = "DELETE FROM record WHERE hash_id=@HashId OR data_md5=@DataMd5;";
+        if (count > 1)
+            await Connection.ExecuteAsync(sql,new { HashId=clipboardData.HashId, DataMd5=dataMd5 });
+        // otherwise, no record depends on assets, directly delete records
+        // **both** in `record` and `assets` using foreign key constraint,
+        // i.e., ON DELETE CASCADE
+        else
+        {
+            sql = "PRAGMA foreign_keys = ON; DELETE FROM assets WHERE md5=@DataMd5;";
+            await Connection.ExecuteAsync(sql, new {DataMd5=dataMd5});
+        }
+        CloseIfNotKeep();
+    }
+
+    public async void PinOneRecord(ClipboardData clipboardData)
+    {
+        var sql = "UPDATE record SET pined=@Pin WHERE hash_id=@HashId";
+        await Connection.ExecuteAsync(sql, new { Pin=clipboardData.Pined, HashId=clipboardData.HashId });
+        CloseIfNotKeep();
+    }
+
+    public async Task<LinkedList<ClipboardData>> GetAllRecord()
+    {
+        var sql =
+            """
+            SELECT r.id as Id, a.data_b64 as DataMd5, r.text as Text, r.display_title as DisplayTitle, 
+                   r.senderapp as SenderApp, r.icon_path as IconPath, b.data_b64 as IconMd5, 
+                   r.preview_image_path as PreviewImagePath, r.content_type as ContentType,
+                   r.score as Score, r.init_score as InitScore, r.time as Time,
+                   r.create_time as CreateTime, r.pined as Pined, r.hash_id as HashId
+                 FROM record r
+                 LEFT JOIN assets a ON r.data_md5=a.md5
+                 LEFT JOIN assets b ON r.icon_md5=b.md5;
+            """;
+        var results = await Connection.QueryAsync<Record>(sql);
+        LinkedList<ClipboardData> allRecord = new(results.Select(Record.ToClipboardData));
+        CloseIfNotKeep();
         return allRecord;
     }
 
-    public void DeleteRecordByKeepTime(int contentType, uint keepTime)
+    public async void DeleteRecordByKeepTime(int contentType, int keepTime)
     {
-        Connection.Open();
-        var command = Connection.CreateCommand();
-        command.CommandText = 
+        var sql = 
             """
-                DELETE FROM assets 
-                       WHERE EXISTS(
-                       SELECT id from record
-                            WHERE julianday(create_time) + $keepTime / 24 < julianday('now')
-                            AND content_type=$content_type
-                            AND (assets.md5=record.data OR assets.md5=record.icon_id));
-
-                DELETE FROM record 
-                       WHERE julianday(create_time) + $keepTime / 24 < julianday('now')
-                       AND content_type=$content_type;
+            DELETE FROM record
+                WHERE strftime('%s', 'now') - strftime('%s', create_time) > @KeepTime*3600
+                AND content_type=@ContentType;
             """;
-        command.Parameters.AddWithValue("$keepTime", keepTime);
-        command.Parameters.AddWithValue("$content_type", contentType);
-        command.ExecuteNonQuery();
+        var r = await Connection.ExecuteAsync(sql, new { KeepTime=keepTime, ContentType=contentType});
         CloseIfNotKeep();
     }
 
     public void Close()
     {
-        if ((Connection.State & ConnectionState.Open) != 0)
+        if (Connection.State == ConnectionState.Open)
             Connection.Close();
     }
 
-    private void CloseIfNotKeep()
+    public void Open()
+    {
+        if (Connection.State == ConnectionState.Closed)
+            Connection.Open();
+    }
+
+    private async void CloseIfNotKeep()
     {
         if (!KeepConnection)
-            Connection.CloseAsync();
+            await Connection.CloseAsync();
+    }
+}
+
+public class Assets
+{
+    public int Id { get; set; }
+
+    public string? DataB64 { get; set; }
+
+    public string? Md5 { get; set; }
+}
+
+public class Record
+{
+    public int Id { get; set; }
+
+    public string HashId { get; set; }
+    public string DataMd5 { get; set; }
+    public string Text { get; set; }
+    public string DisplayTitle { get; set; }
+    public string SenderApp { get; set; }
+    public string IconPath { get; set; }
+    public string IconMd5 { get; set; }
+    public string PreviewImagePath { get; set; }
+    public int ContentType { get; set; }
+    public int Score { get; set; }
+    public int InitScore { get; set; }
+    public DateTime _time;
+    public string Time { get=>_time.ToString("O"); set=>_time=DateTime.Parse(value); }
+    public DateTime _create_time;
+    public string CreateTime { get=>_create_time.ToString("O"); set=>_create_time=DateTime.Parse(value); }
+    public bool Pined { get; set; }
+
+    public static Record FromClipboardData(ClipboardData data)
+    {
+        var iconB64 = data.Icon.ToBase64();
+        var iconMd5 = iconB64.GetMd5();
+        // insert data to table assets
+        string insertData = data.DataToString();
+        var dataMd5 = insertData.GetMd5();
+        var record = new Record
+        {
+            HashId = data.HashId,
+            DataMd5 = dataMd5,
+            Text = data.Text,
+            DisplayTitle = data.DisplayTitle,
+            SenderApp = data.SenderApp,
+            IconPath = data.IconPath,
+            IconMd5 = iconMd5,
+            PreviewImagePath = data.PreviewImagePath,
+            ContentType = (int)data.Type,
+            Score = data.Score,
+            InitScore = data.InitScore,
+            Time = data.Time.ToString("O"),
+            CreateTime = data.CreateTime.ToString("O"),
+            Pined = data.Pined,
+        };
+        return record;
+    }
+
+    public static ClipboardData ToClipboardData(Record record)
+    {
+        var type = (CbContentType)record.ContentType;
+        var clipboardData = new ClipboardData
+        {
+            HashId = record.HashId,
+            Data = record.DataMd5,
+            Text = record.Text,
+            DisplayTitle = record.DisplayTitle,
+            SenderApp = record.SenderApp,
+            IconPath = record.IconPath,
+            Icon = record.IconMd5.ToBitmapImage(),
+            PreviewImagePath = record.PreviewImagePath,
+            Type = type,
+            Score = record.Score,
+            InitScore = record.InitScore,
+            Time = record._time,
+            CreateTime = record._create_time,
+            Pined = record.Pined,
+        };
+        switch (type)
+        {
+            case CbContentType.Text:
+                break;
+            case CbContentType.Image:
+                clipboardData.Data = record.DataMd5.ToImage();
+                break;
+            case CbContentType.Files:
+                clipboardData.Data = record.DataMd5.Split('\n');
+                break;
+            default:
+                break;
+        }
+
+        return clipboardData;
+
     }
 }

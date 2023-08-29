@@ -21,10 +21,14 @@ public partial class PreviewPanel : UserControl
     private Action<ClipboardData> PinRecord { get; set; }
     private int OldScore { get; set; }
 
-    public PreviewPanel(ClipboardData clipboardData, PluginInitContext context,
+    public PreviewPanel(
+        ClipboardData clipboardData,
+        PluginInitContext context,
         DirectoryInfo cacheDir,
         Action<ClipboardData> delAction,
-        Action<ClipboardData> copyAction, Action<ClipboardData> pinAction)
+        Action<ClipboardData> copyAction,
+        Action<ClipboardData> pinAction
+    )
     {
         _clipboardData = clipboardData;
         _context = context;
@@ -45,20 +49,20 @@ public partial class PreviewPanel : UserControl
         PreImage.Visibility = Visibility.Hidden;
         switch (_clipboardData.Type)
         {
-            case CbMonitor.ContentTypes.Text:
+            case CbContentType.Text:
                 SetText();
                 break;
-            case CbMonitor.ContentTypes.Files:
+            case CbContentType.Files:
                 var ss = _clipboardData.Data as string[] ?? Array.Empty<string>();
                 var s = string.Join('\n', ss);
                 SetText(s);
                 break;
-            case CbMonitor.ContentTypes.Image:
+            case CbContentType.Image:
                 TxtBoxPre.Visibility = Visibility.Hidden;
                 PreImage.Visibility = Visibility.Visible;
                 SetImage();
                 break;
-            case CbMonitor.ContentTypes.Other:
+            case CbContentType.Other:
             default:
                 break;
         }
@@ -72,7 +76,8 @@ public partial class PreviewPanel : UserControl
 
     public void SetImage()
     {
-        if (_clipboardData.Data is not Image img) return;
+        if (_clipboardData.Data is not Image img)
+            return;
         var im = img.ToBitmapImage();
         PreImage.Source = im;
     }
@@ -91,16 +96,14 @@ public partial class PreviewPanel : UserControl
     {
         BtnPin.Content = FindResource(_clipboardData.Pined ? "PinedIcon" : "PinIcon");
     }
-    
+
     private void TxtBoxPre_GotFocus(object sender, System.Windows.RoutedEventArgs e)
     {
         TextBox tb = (TextBox)sender;
         tb.Dispatcher.BeginInvoke(new Action(() => tb.SelectAll()));
     }
 
-    private void TxtBoxPre_TextChanged(object sender, TextChangedEventArgs e)
-    {
-    }
+    private void TxtBoxPre_TextChanged(object sender, TextChangedEventArgs e) { }
 
     private void BtnPin_Click(object sender, RoutedEventArgs e)
     {

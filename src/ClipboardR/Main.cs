@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -18,7 +19,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 {
     // clipboard listener instance
     private CbMonitor _clipboard = new() { ObserveLastEntry = false };
-    private string _className => GetType().Name;
+    private string ClassName => GetType().Name;
 
     // working directory
     private DirectoryInfo ClipDir { get; set; } = null!;
@@ -40,13 +41,13 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
     private DbHelper _dbHelper = null!;
     private string _dbPath = null!;
 
-    private PluginInitContext? _context;
+    private PluginInitContext _context = null!;
     private LinkedList<ClipboardData> _dataList = new();
 
     public void Init(PluginInitContext ctx)
     {
         this._context = ctx;
-        _context.API.LogDebug(_className, "Adding clipboard listener");
+        _context.API.LogDebug(ClassName, "Adding clipboard listener");
         this._clipboard.ClipboardChanged += _OnClipboardChange;
 
         ClipDir = new DirectoryInfo(ctx.CurrentPluginMetadata.PluginDirectory);
@@ -69,18 +70,18 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 
         _settings.ConfigFile = _settingsPath;
         _settings.Save();
-        _context.API.LogDebug(_className, "Created settings successfully");
+        _context.API.LogDebug(ClassName, "Created settings successfully");
 
         _maxDataCount = _settings.MaxDataCount;
         // restore records
-        _context.API.LogDebug(_className, $"{_settings.ToString()}");
+        _context.API.LogInfo(ClassName, $"{_settings}");
         _dbPath = Path.Join(ClipDir.FullName, _settings.DbPath);
-        _context.API.LogDebug(_className, $"Using database at: {_dbPath}");
-        _dbHelper = new DbHelper($"Data Source={_dbPath}");
+        _context.API.LogDebug(ClassName, $"Using database at: {_dbPath}");
+        _dbHelper = new DbHelper(_dbPath);
         RestoreRecordsFromDb();
     }
 
-    private void RestoreRecordsFromDb()
+    private async void RestoreRecordsFromDb()
     {
         if (!File.Exists(_dbPath))
         {
@@ -88,10 +89,13 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
             return;
         }
 
-        var records = _dbHelper.GetAllRecord();
+        var records = await _dbHelper.GetAllRecord();
         if (records.Count > 0)
+        {
             _dataList = records;
-        _context!.API.LogWarn(_className, "Restore records successfully");
+            CurrentScore = records.Max(r => r.Score);
+        }
+        _context.API.LogWarn(ClassName, "Restore records successfully");
     }
 
     public List<Result> Query(Query query)
@@ -109,7 +113,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 
         var results = new List<Result>();
         results.AddRange(displayData.Select(ClipDataToResult));
-        _context.API.LogWarn(_className, "Added to result");
+        _context.API.LogDebug(ClassName, "Added to result");
         results.Add(
             new Result()
             {
@@ -139,14 +143,14 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
             SubTitle = dispSubTitle,
             Icon = () => o.Icon,
             CopyText = o.Text,
-            Score = o.Score,
+            Score = GetNewScoreByOrderBy(o),
             TitleToolTip = o.Text,
             SubTitleToolTip = dispSubTitle,
             PreviewPanel = new Lazy<UserControl>(
                 () =>
                     new PreviewPanel(
                         o,
-                        _context!,
+                        _context,
                         ClipCacheDir,
                         delAction: RemoveFromDatalist,
                         copyAction: CopyToClipboard,
@@ -156,8 +160,8 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
             AsyncAction = async _ =>
             {
                 CopyToClipboard(o);
-                _context!.API.HideMainWindow();
-                while (_context!.API.IsMainWindowVisible())
+                _context.API.HideMainWindow();
+                while (_context.API.IsMainWindowVisible())
                     await Task.Delay(100);
                 new InputSimulator().Keyboard.ModifiedKeyStroke(
                     VirtualKeyCode.CONTROL,
@@ -170,14 +174,16 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 
     private void _OnClipboardChange(object? sender, CbMonitor.ClipboardChangedEventArgs e)
     {
-        _context!.API.LogDebug(_className, "Clipboard changed");
+        _context.API.LogDebug(ClassName, "Clipboard changed");
         if (e.Content is null)
             return;
 
         var now = DateTime.Now;
         var clipboardData = new ClipboardData
         {
+            HashId = Utils.GetGuid(),
             Text = "",
+            DisplayTitle = "",
             Type = e.ContentType,
             Data = e.Content,
             SenderApp = e.SourceApplication.Name,
@@ -193,26 +199,28 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 
         switch (e.ContentType)
         {
-            case CbMonitor.ContentTypes.Text:
+            case CbContentType.Text:
                 clipboardData.Text = _clipboard.ClipboardText;
-                _context.API.LogDebug(_className, "Processed text change");
+                _context.API.LogDebug(ClassName, "Processed text change");
                 break;
-            case CbMonitor.ContentTypes.Image:
+            case CbContentType.Image:
                 clipboardData.Text = $"Image:{clipboardData.Time:yy-MM-dd-HH:mm:ss}";
                 if (_settings.CacheImages)
                     Utils.SaveImageCache(clipboardData, ClipCacheDir);
-                clipboardData.Icon = _clipboard.ClipboardImage.ToBitmapImage();
-                _context.API.LogDebug(_className, "Processed image change");
+                var img = _clipboard.ClipboardImage;
+                if (img != null)
+                    clipboardData.Icon = img.ToBitmapImage();
+                _context.API.LogDebug(ClassName, "Processed image change");
                 break;
-            case CbMonitor.ContentTypes.Files:
+            case CbContentType.Files:
                 var t = _clipboard.ClipboardFiles.ToArray();
                 clipboardData.Data = t;
                 clipboardData.Text = string.Join("\n", t.Take(2)) + "\n...";
-                _context.API.LogDebug(_className, "Processed file change");
+                _context.API.LogDebug(ClassName, "Processed file change");
                 break;
-            case CbMonitor.ContentTypes.Other:
+            case CbContentType.Other:
                 // TODO: nothing to do now
-                _context.API.LogDebug(_className, "Other change listened, skip");
+                _context.API.LogDebug(ClassName, "Other change listened, skip");
                 return;
             default:
                 break;
@@ -221,33 +229,49 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
         clipboardData.DisplayTitle = Regex.Replace(clipboardData.Text.Trim(), @"(\r|\n|\t|\v)", "");
 
         // make sure no repeat
-        if (_dataList.Any(node => node.Equals(clipboardData)))
+        if (_dataList.Any(node => node.GetMd5()==clipboardData.GetMd5()))
             return;
-        _context.API.LogDebug(_className, "Adding to dataList");
+        _context.API.LogDebug(ClassName, "Adding to dataList");
         _dataList.AddFirst(clipboardData);
-        _context.API.LogDebug(_className, "Adding to database");
-        var isAdd = (_settings.KeepText && clipboardData.Type == CbMonitor.ContentTypes.Text) ||
-                    (_settings.KeepImages && clipboardData.Type == CbMonitor.ContentTypes.Image) ||
-                    (_settings.KeepFiles && clipboardData.Type == CbMonitor.ContentTypes.Files);
+        _context.API.LogDebug(ClassName, "Adding to database");
+        var isAdd =
+            (_settings.KeepText && clipboardData.Type == CbContentType.Text)
+            || (_settings.KeepImage && clipboardData.Type == CbContentType.Image)
+            || (_settings.KeepFile && clipboardData.Type == CbContentType.Files);
         if (isAdd)
             _dbHelper.AddOneRecord(clipboardData);
         if (_dataList.Count > _maxDataCount)
             _dataList.RemoveLast();
         CurrentScore++;
-        _context.API.LogDebug(_className, "Processing clipboard change finished");
+        _context.API.LogDebug(ClassName, "Processing clipboard change finished");
     }
 
-    public Control CreateSettingPanel() => new SettingsPanel(_settings, _context!);
+    public Control CreateSettingPanel()
+    {
+        _context.API.LogWarn(ClassName, $"{_settings}");
+        return new SettingsPanel(_settings, _context);
+    }
 
     public void Dispose()
     {
         try
         {
             // Delete expired records
-            _dbHelper?.DeleteRecordByKeepTime((int)CbMonitor.ContentTypes.Text, _settings.KeepTextHours);
+            var kv = new List<Tuple<CbContentType, int>>
+            {
+                new(CbContentType.Text, _settings.KeepTextHours),
+                new(CbContentType.Image, _settings.KeepImageHours),
+                new(CbContentType.Files, _settings.KeepFileHours),
+            };
+            foreach (var pair in kv)
+            {
+                _dbHelper?.DeleteRecordByKeepTime((int)pair.Item1,
+                    CmBoxIndexMapper.ToKeepTime(pair.Item2));
+            }
+
             _dbHelper?.Close();
         }
-        catch (Exception e)
+        catch (Exception)
         {
             // ignore
         }
@@ -257,30 +281,59 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
     {
         _dataList.Remove(clipboardData);
         System.Windows.Forms.Clipboard.SetDataObject(clipboardData.Data);
-        _context!.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
+        _context.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
     }
 
     public void RemoveFromDatalist(ClipboardData clipboardData)
     {
         _dataList.Remove(clipboardData);
         _dbHelper.DeleteOneRecord(clipboardData);
-        _context!.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
+        _context.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
     }
 
     public void PinOneRecord(ClipboardData c)
     {
         _dataList.Remove(c);
-        if (c.Type is CbMonitor.ContentTypes.Text or CbMonitor.ContentTypes.Files)
+        if (c.Type is CbContentType.Text or CbContentType.Files)
             c.Icon = c.Pined
                 ? new BitmapImage(new Uri(_defaultPinIconPath, UriKind.RelativeOrAbsolute))
                 : new BitmapImage(new Uri(_defaultIconPath, UriKind.RelativeOrAbsolute));
         _dataList.AddLast(c);
+        _context.API.ShowMsg($"{c.Pined}, hash: {c.HashId}");
         _dbHelper.PinOneRecord(c);
-        _context!.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
+        _context.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
+    }
+
+    public int GetNewScoreByOrderBy(ClipboardData clipboardData)
+    {
+        if (clipboardData.Pined) return int.MaxValue;
+        var orderBy = (CbOrders)_settings.OrderBy;
+        int score = 0;
+        switch (orderBy)
+        {
+            case CbOrders.Score:
+                score = clipboardData.Score;
+                break;
+            case CbOrders.CreateTime:
+                var ctime = new DateTimeOffset(clipboardData.CreateTime);
+                score = Convert.ToInt32(ctime.ToUnixTimeSeconds().ToString()[^9..]);
+                break;
+            case CbOrders.Type:
+                score = (int)clipboardData.Type;
+                break;
+            case CbOrders.SourceApplication:
+                var last = int.Min(clipboardData.SenderApp.Length, 10);
+                score = Encoding.UTF8.GetBytes(clipboardData.SenderApp[..last]).Sum(i => i);
+                break;
+            default:
+                break;
+        }
+
+        return score;
     }
 
     public void Save()
     {
-        _settings?.Save();
+        _settings.Save();
     }
 }

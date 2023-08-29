@@ -1,10 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Cake.Common;
 using Cake.Common.Diagnostics;
 using Cake.Common.IO;
@@ -118,21 +115,24 @@ public class PublishTask : FrostingTask<BuildContext>
         var ptn =
             @"Clipboar.+\.dll|" +
             @".+\.png|" +
+            @"Dapper\.dll|" +
             @"plugin\.json|H\.InputSimulator\.dll|" +
             @"SQLitePCLRaw.+\.dll|Microsoft.+(S|s)qlite\.dll";
         var files = context.GetFiles($"{srcDir}/**/*");
         FilePath? versionFile = null;
         foreach (var f in files)
         {
-            var fstr = f.ToString();
-            if (f == null || (fstr.EndsWith("e_sqlite3.dll") && ! fstr.EndsWith(".e_sqlite3.dll")))
+            var fStr = f.ToString();
+            var fName = f.GetFilename().ToString();
+            if (fStr == null || fName == null) continue;
+            if (fStr.EndsWith("e_sqlite3.dll") && ! fStr.EndsWith(".e_sqlite3.dll"))
             {
                 files.Remove(f);
                 continue;
             }
-            if (fstr.EndsWith("plugin.json"))
+            if (fStr.EndsWith("plugin.json"))
                 versionFile = f;
-            if (!Regex.IsMatch(f.GetFilename().ToString(), ptn))
+            if (!Regex.IsMatch(fName, ptn))
             {
                 context.DeleteFile(f);
                 files.Remove(f);
@@ -158,7 +158,7 @@ public class PublishTask : FrostingTask<BuildContext>
                 File.ReadAllText(versionFile.ToString()!)
             );
             if (versionInfoObj != null)
-                context.PublishVersion = versionInfoObj.Version;
+                context.PublishVersion = versionInfoObj.Version ?? "0.0.0";
             else
                 Console.WriteLine("Get version info from plugin.json failed!");
         }
@@ -220,14 +220,14 @@ public class DeployTask : FrostingTask<BuildContext>
 
 public class VersionInfo
 {
-    public string ID { get; set; }
-    public string ActionKeyword { get; set; }
-    public string Name { get; set; }
-    public string Description { get; set; }
-    public string Author { get; set; }
-    public string Version { get; set; }
-    public string Language { get; set; }
-    public string Website { get; set; }
-    public string IcoPath { get; set; }
-    public string ExecuteFileName { get; set; }
+    public string? ID { get; set; }
+    public string? ActionKeyword { get; set; }
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+    public string? Author { get; set; }
+    public string? Version { get; set; }
+    public string? Language { get; set; }
+    public string? Website { get; set; }
+    public string? IcoPath { get; set; }
+    public string? ExecuteFileName { get; set; }
 }

@@ -9,15 +9,16 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-      <DebugType>none</DebugType>
+      <DebugType>full</DebugType>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
       <DebugType>none</DebugType>
-      <DebugSymbols>False</DebugSymbols>
+      <DebugSymbols>true</DebugSymbols>
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Dapper" Version="2.0.151" />
       <PackageReference Include="Flow.Launcher.Plugin" Version="4.1.1" />
       <PackageReference Include="Microsoft.Data.Sqlite" Version="7.0.10" />
     </ItemGroup>
