@@ -48,8 +48,8 @@ If you want to save images in your clipboard, open the `CacheImages` option in s
 Note: It is recommended to cache images using `CacheImages` option, saving large images
 via `KeepImage` to database may block query for a little while.
 
-![settings1](./images/settings1.png)
-![settings2](./images/settings2.png)
+![settings1](./Images/settings1.png)
+![settings2](./Images/settings2.png)
 
 ## Todo List
 
