@@ -95,6 +95,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
             _dataList = records;
             CurrentScore = records.Max(r => r.Score);
         }
+
         _context.API.LogWarn(ClassName, "Restore records successfully");
     }
 
@@ -137,6 +138,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 
             return results;
         }
+
         var displayData =
             query.Search.Trim().Length == 0
                 ? _dataList.ToArray()

@@ -113,20 +113,23 @@ public class DbHelper
     {
         var dataMd5 = clipboardData.DataToString().GetMd5();
         var sql = "SELECT COUNT() FROM record WHERE data_md5=@DataMd5;";
-        var count = await Connection.QueryFirstAsync<int>(sql, new {DataMd5=dataMd5});
+        var count = await Connection.QueryFirstAsync<int>(sql, new { DataMd5 = dataMd5 });
         // count > 1  means there are more than one record in table `record`
         // depends on corresponding record in table `assets`, in this condition,
         // we only delete record in table `record`
         sql = "DELETE FROM record WHERE hash_id=@HashId OR data_md5=@DataMd5;";
         if (count > 1)
-            await Connection.ExecuteAsync(sql,new { HashId=clipboardData.HashId, DataMd5=dataMd5 });
+            await Connection.ExecuteAsync(
+                sql,
+                new { HashId = clipboardData.HashId, DataMd5 = dataMd5 }
+            );
         // otherwise, no record depends on assets, directly delete records
         // **both** in `record` and `assets` using foreign key constraint,
         // i.e., ON DELETE CASCADE
         else
         {
             sql = "PRAGMA foreign_keys = ON; DELETE FROM assets WHERE md5=@DataMd5;";
-            await Connection.ExecuteAsync(sql, new {DataMd5=dataMd5});
+            await Connection.ExecuteAsync(sql, new { DataMd5 = dataMd5 });
         }
         CloseIfNotKeep();
     }
@@ -137,18 +140,20 @@ public class DbHelper
         await Connection.ExecuteAsync(sql);
         CreateDb();
     }
-    
+
     public async void PinOneRecord(ClipboardData clipboardData)
     {
         var sql = "UPDATE record SET pined=@Pin WHERE hash_id=@HashId";
-        await Connection.ExecuteAsync(sql, new { Pin=clipboardData.Pined, HashId=clipboardData.HashId });
+        await Connection.ExecuteAsync(
+            sql,
+            new { Pin = clipboardData.Pined, HashId = clipboardData.HashId }
+        );
         CloseIfNotKeep();
     }
 
     public async Task<LinkedList<ClipboardData>> GetAllRecord()
     {
-        var sql =
-            """
+        var sql = """
             SELECT r.id as Id, a.data_b64 as DataMd5, r.text as Text, r.display_title as DisplayTitle, 
                    r.senderapp as SenderApp, r.icon_path as IconPath, b.data_b64 as IconMd5, 
                    r.preview_image_path as PreviewImagePath, r.content_type as ContentType,
@@ -166,13 +171,15 @@ public class DbHelper
 
     public async void DeleteRecordByKeepTime(int contentType, int keepTime)
     {
-        var sql = 
-            """
+        var sql = """
             DELETE FROM record
                 WHERE strftime('%s', 'now') - strftime('%s', create_time) > @KeepTime*3600
                 AND content_type=@ContentType;
             """;
-        var r = await Connection.ExecuteAsync(sql, new { KeepTime=keepTime, ContentType=contentType});
+        var r = await Connection.ExecuteAsync(
+            sql,
+            new { KeepTime = keepTime, ContentType = contentType }
+        );
         CloseIfNotKeep();
     }
 
@@ -220,9 +227,17 @@ public class Record
     public int Score { get; set; }
     public int InitScore { get; set; }
     public DateTime _time;
-    public string Time { get=>_time.ToString("O"); set=>_time=DateTime.Parse(value); }
+    public string Time
+    {
+        get => _time.ToString("O");
+        set => _time = DateTime.Parse(value);
+    }
     public DateTime _create_time;
-    public string CreateTime { get=>_create_time.ToString("O"); set=>_create_time=DateTime.Parse(value); }
+    public string CreateTime
+    {
+        get => _create_time.ToString("O");
+        set => _create_time = DateTime.Parse(value);
+    }
     public bool Pined { get; set; }
 
     public static Record FromClipboardData(ClipboardData data)
@@ -287,6 +302,5 @@ public class Record
         }
 
         return clipboardData;
-
     }
 }

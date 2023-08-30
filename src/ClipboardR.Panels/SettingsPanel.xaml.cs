@@ -15,7 +15,11 @@ public partial class SettingsPanel
     private bool Ready { get; set; } = false;
 
     public static readonly DependencyProperty MaxDataCountProperty = DependencyProperty.Register(
-        nameof(MaxDataCount), typeof(int), typeof(SettingsPanel), new PropertyMetadata(default(int)));
+        nameof(MaxDataCount),
+        typeof(int),
+        typeof(SettingsPanel),
+        new PropertyMetadata(default(int))
+    );
 
     public int MaxDataCount
     {
@@ -29,7 +33,11 @@ public partial class SettingsPanel
     }
 
     public static readonly DependencyProperty OrderByProperty = DependencyProperty.Register(
-        nameof(OrderBy), typeof(int), typeof(SettingsPanel), new PropertyMetadata(default(int)));
+        nameof(OrderBy),
+        typeof(int),
+        typeof(SettingsPanel),
+        new PropertyMetadata(default(int))
+    );
 
     public int OrderBy
     {
@@ -40,9 +48,13 @@ public partial class SettingsPanel
             CmBoxOrderBy.SelectedIndex = value;
         }
     }
-    
+
     public static readonly DependencyProperty KeepTextHoursProperty = DependencyProperty.Register(
-        nameof(KeepTextHours), typeof(int), typeof(SettingsPanel), new PropertyMetadata(default(int)));
+        nameof(KeepTextHours),
+        typeof(int),
+        typeof(SettingsPanel),
+        new PropertyMetadata(default(int))
+    );
 
     public int KeepTextHours
     {
@@ -53,9 +65,13 @@ public partial class SettingsPanel
             CmBoxKeepText.SelectedIndex = value;
         }
     }
-    
+
     public static readonly DependencyProperty KeepImageHoursProperty = DependencyProperty.Register(
-        nameof(KeepImageHours), typeof(int), typeof(SettingsPanel), new PropertyMetadata(default(int)));
+        nameof(KeepImageHours),
+        typeof(int),
+        typeof(SettingsPanel),
+        new PropertyMetadata(default(int))
+    );
 
     public int KeepImageHours
     {
@@ -66,9 +82,13 @@ public partial class SettingsPanel
             CmBoxKeepImages.SelectedIndex = value;
         }
     }
-    
+
     public static readonly DependencyProperty KeepFileHoursProperty = DependencyProperty.Register(
-        nameof(KeepFileHours), typeof(int), typeof(SettingsPanel), new PropertyMetadata(default(int)));
+        nameof(KeepFileHours),
+        typeof(int),
+        typeof(SettingsPanel),
+        new PropertyMetadata(default(int))
+    );
 
     public int KeepFileHours
     {
@@ -160,30 +180,36 @@ public partial class SettingsPanel
 
     private void CmBoxOrderBy_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (Ready) settings.OrderBy = CmBoxOrderBy.SelectedIndex;
+        if (Ready)
+            settings.OrderBy = CmBoxOrderBy.SelectedIndex;
     }
-    
+
     private void CmBoxKeepText_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (Ready) settings.KeepTextHours = CmBoxKeepText.SelectedIndex;
+        if (Ready)
+            settings.KeepTextHours = CmBoxKeepText.SelectedIndex;
     }
 
     private void CmBoxKeepImages_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (Ready) settings.KeepImageHours = CmBoxKeepImages.SelectedIndex;
+        if (Ready)
+            settings.KeepImageHours = CmBoxKeepImages.SelectedIndex;
     }
 
     private void CmBoxKeepFiles_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (Ready) settings.KeepFileHours = CmBoxKeepFiles.SelectedIndex;
+        if (Ready)
+            settings.KeepFileHours = CmBoxKeepFiles.SelectedIndex;
     }
 
     private uint TryGetCBoxTag(object sender)
     {
         var item = (sender as ComboBox)?.SelectedItem as ComboBoxItem;
-        if (item?.Tag == null) return uint.MaxValue;
+        if (item?.Tag == null)
+            return uint.MaxValue;
         var success = uint.TryParse(item.Tag as string, out var v);
-        if (!success) return uint.MaxValue;
+        if (!success)
+            return uint.MaxValue;
         return v == 0 ? uint.MaxValue : v;
     }
 }

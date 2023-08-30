@@ -113,19 +113,20 @@ public class PublishTask : FrostingTask<BuildContext>
         // context.CopyDirectory(srcDir, midDir);
 
         var ptn =
-            @"Clipboar.+\.dll|" +
-            @".+\.png|" +
-            @"Dapper\.dll|" +
-            @"plugin\.json|H\.InputSimulator\.dll|" +
-            @"SQLitePCLRaw.+\.dll|Microsoft.+(S|s)qlite\.dll";
+            @"Clipboar.+\.dll|"
+            + @".+\.png|"
+            + @"Dapper\.dll|"
+            + @"plugin\.json|H\.InputSimulator\.dll|"
+            + @"SQLitePCLRaw.+\.dll|Microsoft.+(S|s)qlite\.dll";
         var files = context.GetFiles($"{srcDir}/**/*");
         FilePath? versionFile = null;
         foreach (var f in files)
         {
             var fStr = f.ToString();
             var fName = f.GetFilename().ToString();
-            if (fStr == null || fName == null) continue;
-            if (fStr.EndsWith("e_sqlite3.dll") && ! fStr.EndsWith(".e_sqlite3.dll"))
+            if (fStr == null || fName == null)
+                continue;
+            if (fStr.EndsWith("e_sqlite3.dll") && !fStr.EndsWith(".e_sqlite3.dll"))
             {
                 files.Remove(f);
                 continue;
@@ -146,11 +147,12 @@ public class PublishTask : FrostingTask<BuildContext>
             .Combine($"{context.BuildFor}")
             .Combine("native")
             .CombineWithFilePath(new FilePath("e_sqlite3.dll"));
-        context.CopyFile(
-            eSqlite3Path,
-            srcDir.CombineWithFilePath("e_sqlite3.dll"));
+        context.CopyFile(eSqlite3Path, srcDir.CombineWithFilePath("e_sqlite3.dll"));
         files.Add(srcDir.CombineWithFilePath("e_sqlite3.dll"));
-        context.DeleteDirectory(srcDir.Combine("runtimes"), new DeleteDirectorySettings() { Recursive = true });
+        context.DeleteDirectory(
+            srcDir.Combine("runtimes"),
+            new DeleteDirectorySettings() { Recursive = true }
+        );
 
         if (versionFile != null)
         {
@@ -191,9 +193,7 @@ public sealed class CleanTask : FrostingTask<BuildContext>
 [IsDependentOn(typeof(CleanTask))]
 [IsDependentOn(typeof(BuildTask))]
 [IsDependentOn(typeof(PublishTask))]
-public class DefaultTask : FrostingTask
-{
-}
+public class DefaultTask : FrostingTask { }
 
 [TaskName("Deploy")]
 public class DeployTask : FrostingTask<BuildContext>
@@ -201,20 +201,28 @@ public class DeployTask : FrostingTask<BuildContext>
     public override void Run(BuildContext context)
     {
         var builder = context.DefaultSln.Value.Projects.First(p => p.Name.EndsWith("Build"));
-        var distDir = builder.Path.GetDirectory().GetParent().Combine(new DirectoryPath(context.PublishDir));
+        var distDir = builder.Path
+            .GetDirectory()
+            .GetParent()
+            .Combine(new DirectoryPath(context.PublishDir));
         var files = context.GetFiles($"{distDir}/ClipboardR*.zip");
 
         DateTime t = DateTime.FromFileTime(0);
         FilePath mostRecentFile = files.First();
         foreach (var f in files)
         {
-            if (File.GetCreationTime(f.FullPath) <= t) continue;
+            if (File.GetCreationTime(f.FullPath) <= t)
+                continue;
             t = File.GetCreationTime(f.FullPath);
             mostRecentFile = f;
         }
 
-        context.Unzip(mostRecentFile,
-            new DirectoryPath(@"%APPDATA%/FlowLauncher/Plugins" + mostRecentFile.GetFilenameWithoutExtension()));
+        context.Unzip(
+            mostRecentFile,
+            new DirectoryPath(
+                @"%APPDATA%/FlowLauncher/Plugins" + mostRecentFile.GetFilenameWithoutExtension()
+            )
+        );
     }
 }
 

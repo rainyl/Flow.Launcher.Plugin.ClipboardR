@@ -57,7 +57,7 @@ public static class ClipImageExtension
         var hex = hash.Select(i => i.ToString("X2"));
         return string.Join("", hex);
     }
-    
+
     public static string GetSha256(this string s)
     {
         byte[] inputBytes = Encoding.UTF8.GetBytes(s);

@@ -34,7 +34,7 @@ public struct ClipboardData : IEquatable<ClipboardData>
         return hashcode;
     }
 
-    public static bool operator == (ClipboardData a, ClipboardData b) => a.HashId == b.HashId;
+    public static bool operator ==(ClipboardData a, ClipboardData b) => a.HashId == b.HashId;
 
     public static bool operator !=(ClipboardData a, ClipboardData b) => a.HashId != b.HashId;
 
