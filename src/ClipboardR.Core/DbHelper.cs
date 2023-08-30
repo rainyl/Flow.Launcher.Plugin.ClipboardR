@@ -131,6 +131,13 @@ public class DbHelper
         CloseIfNotKeep();
     }
 
+    public async void DeleteAllRecords()
+    {
+        var sql = "DROP TABLE IF EXISTS record; DROP TABLE IF EXISTS assets; VACUUM;";
+        await Connection.ExecuteAsync(sql);
+        CreateDb();
+    }
+    
     public async void PinOneRecord(ClipboardData clipboardData)
     {
         var sql = "UPDATE record SET pined=@Pin WHERE hash_id=@HashId";

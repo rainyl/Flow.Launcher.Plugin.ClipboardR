@@ -172,13 +172,22 @@ public class CbMonitor
     /// </summary>
     public class ClipboardChangedEventArgs : EventArgs
     {
-        public ClipboardChangedEventArgs(object? content, CbContentType contentType, SourceApplication source)
+        public ClipboardChangedEventArgs(
+            object? content,
+            CbContentType contentType,
+            SourceApplication source
+        )
         {
             Content = content;
             ContentType = contentType;
 
-            SourceApplication = new SourceApplication(source.Id, source.Handle, source.Name,
-                source.Title, source.Path);
+            SourceApplication = new SourceApplication(
+                source.Id,
+                source.Handle,
+                source.Name,
+                source.Title,
+                source.Path
+            );
         }
 
         #region Properties
@@ -209,8 +218,8 @@ public class CbMonitor
     #region Private
 
     /// <summary>
-    /// This initiates a Timer that then begins the 
-    /// clipboard-monitoring service. The Timer will 
+    /// This initiates a Timer that then begins the
+    /// clipboard-monitoring service. The Timer will
     /// auto-shutdown once the service has started.
     /// </summary>
     private void OnLoad(object? sender, EventArgs e)
@@ -287,8 +296,7 @@ public class SourceApplication
     /// <param name="name">The application's name.</param>
     /// <param name="title">The application's title.</param>
     /// <param name="path">The application's path.</param>
-    internal SourceApplication(int id, IntPtr handle, string name,
-        string title, string path)
+    internal SourceApplication(int id, IntPtr handle, string name, string title, string path)
     {
         Id = id;
         Name = name;
@@ -329,13 +337,12 @@ public class SourceApplication
     #region Overrides
 
     /// <summary>
-    /// Returns a <see cref="string"/> containing the list 
+    /// Returns a <see cref="string"/> containing the list
     /// of application details provided.
     /// </summary>
     public override string ToString()
     {
-        return $"ID: {Id}; Handle: {Handle}, Name: {Name}; " +
-               $"Title: {Title}; Path: {Path}";
+        return $"ID: {Id}; Handle: {Handle}, Name: {Name}; " + $"Title: {Title}; Path: {Path}";
     }
 
     #endregion

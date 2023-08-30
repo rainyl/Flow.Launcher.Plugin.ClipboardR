@@ -22,6 +22,9 @@ public class Settings
 
     public int OrderBy { get; set; } = 0;
 
+    // TODO: add this in settings panel
+    public string ClearKeyword { get; set; } = "clear";
+
     public void Save()
     {
         var options = new JsonSerializerOptions { WriteIndented = true };
@@ -30,10 +33,11 @@ public class Settings
 
     public static Settings Load(string filePath)
     {
-        var options = new JsonSerializerOptions() { WriteIndented = true};
+        var options = new JsonSerializerOptions() { WriteIndented = true };
         using var fs = File.OpenRead(filePath);
         Console.WriteLine();
-        return JsonSerializer.Deserialize<Settings>(fs, options) ?? new Settings(){ConfigFile = filePath};
+        return JsonSerializer.Deserialize<Settings>(fs, options)
+            ?? new Settings() { ConfigFile = filePath };
     }
 
     public override string ToString()

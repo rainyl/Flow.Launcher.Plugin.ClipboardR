@@ -100,6 +100,43 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 
     public List<Result> Query(Query query)
     {
+        var results = new List<Result>();
+        if (query.FirstSearch == _settings.ClearKeyword)
+        {
+            results.AddRange(
+                new[]
+                {
+                    new Result
+                    {
+                        Title = "records",
+                        SubTitle = "clear records in memory only",
+                        IcoPath = _defaultIconPath,
+                        Score = 21,
+                        Action = _ =>
+                        {
+                            _dataList.Clear();
+                            return true;
+                        },
+                    },
+                    new Result
+                    {
+                        Title = "database",
+                        SubTitle = "clear records in database too",
+                        IcoPath = _defaultIconPath,
+                        Score = 1,
+                        Action = _ =>
+                        {
+                            _dataList.Clear();
+                            _dbHelper.DeleteAllRecords();
+                            CurrentScore = 1;
+                            return true;
+                        },
+                    }
+                }
+            );
+
+            return results;
+        }
         var displayData =
             query.Search.Trim().Length == 0
                 ? _dataList.ToArray()
@@ -111,11 +148,10 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                     )
                     .ToArray();
 
-        var results = new List<Result>();
         results.AddRange(displayData.Select(ClipDataToResult));
         _context.API.LogDebug(ClassName, "Added to result");
         results.Add(
-            new Result()
+            new Result
             {
                 Title = "Clear All Records",
                 SubTitle = "Click to clear all records",
@@ -123,10 +159,11 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                 Score = 1,
                 Action = _ =>
                 {
-                    _dataList.Clear();
-                    // TODO: Add option in settings to select clear records from database
-                    CurrentScore = 1;
-                    return true;
+                    _context.API.ChangeQuery(
+                        _context.CurrentPluginMetadata.ActionKeyword + " clear ",
+                        true
+                    );
+                    return false;
                 },
             }
         );
@@ -229,7 +266,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
         clipboardData.DisplayTitle = Regex.Replace(clipboardData.Text.Trim(), @"(\r|\n|\t|\v)", "");
 
         // make sure no repeat
-        if (_dataList.Any(node => node.GetMd5()==clipboardData.GetMd5()))
+        if (_dataList.Any(node => node.GetMd5() == clipboardData.GetMd5()))
             return;
         _context.API.LogDebug(ClassName, "Adding to dataList");
         _dataList.AddFirst(clipboardData);
@@ -265,8 +302,10 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
             };
             foreach (var pair in kv)
             {
-                _dbHelper?.DeleteRecordByKeepTime((int)pair.Item1,
-                    CmBoxIndexMapper.ToKeepTime(pair.Item2));
+                _dbHelper?.DeleteRecordByKeepTime(
+                    (int)pair.Item1,
+                    CmBoxIndexMapper.ToKeepTime(pair.Item2)
+                );
             }
 
             _dbHelper?.Close();
@@ -306,7 +345,8 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 
     public int GetNewScoreByOrderBy(ClipboardData clipboardData)
     {
-        if (clipboardData.Pined) return int.MaxValue;
+        if (clipboardData.Pined)
+            return int.MaxValue;
         var orderBy = (CbOrders)_settings.OrderBy;
         int score = 0;
         switch (orderBy)

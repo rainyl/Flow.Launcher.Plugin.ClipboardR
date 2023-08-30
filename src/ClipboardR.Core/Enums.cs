@@ -15,3 +15,9 @@ public enum CbOrders
     SourceApplication = 2,
     Type = 3,
 }
+
+public enum CbResultType
+{
+    Record,
+    Clear,
+}
