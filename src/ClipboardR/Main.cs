@@ -8,10 +8,13 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Flow.Launcher.Plugin;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using WindowsInput;
 using ClipboardR.Core;
 using ClipboardR.Panels;
+using Material.Icons;
+using Material.Icons.WPF;
 
 namespace ClipboardR;
 
@@ -111,7 +114,9 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                     {
                         Title = "records",
                         SubTitle = "clear records in memory only",
-                        IcoPath = _defaultIconPath,
+                        // IcoPath = _defaultIconPath,
+                        Icon = () =>
+                            MaterialIconKind.Close.ToBitmapImage(fillColor: _settings.IconColor),
                         Score = 21,
                         Action = _ =>
                         {
@@ -123,7 +128,10 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                     {
                         Title = "database",
                         SubTitle = "clear records in database too",
-                        IcoPath = _defaultIconPath,
+                        Icon = () =>
+                            MaterialIconKind.DatabaseAlert.ToBitmapImage(
+                                fillColor: _settings.IconColor
+                            ),
                         Score = 1,
                         Action = _ =>
                         {
@@ -240,6 +248,9 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
         {
             case CbContentType.Text:
                 clipboardData.Text = _clipboard.ClipboardText;
+                clipboardData.Icon = MaterialIconKind.Text.ToBitmapImage(
+                    fillColor: _settings.IconColor
+                );
                 _context.API.LogDebug(ClassName, "Processed text change");
                 break;
             case CbContentType.Image:
@@ -255,6 +266,9 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                 var t = _clipboard.ClipboardFiles.ToArray();
                 clipboardData.Data = t;
                 clipboardData.Text = string.Join("\n", t.Take(2)) + "\n...";
+                clipboardData.Icon = MaterialIconKind.FileMultiple.ToBitmapImage(
+                    _settings.IconColor
+                );
                 _context.API.LogDebug(ClassName, "Processed file change");
                 break;
             case CbContentType.Other:

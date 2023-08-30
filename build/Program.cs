@@ -115,7 +115,8 @@ public class PublishTask : FrostingTask<BuildContext>
         var ptn =
             @"Clipboar.+\.dll|"
             + @".+\.png|"
-            + @"Dapper\.dll|"
+            + @"Dapper\.dll|Svg\.dll|Material\.Icons\.dll|"
+            + @"ExCSS\.dll|"
             + @"plugin\.json|H\.InputSimulator\.dll|"
             + @"SQLitePCLRaw.+\.dll|Microsoft.+(S|s)qlite\.dll";
         var files = context.GetFiles($"{srcDir}/**/*");
