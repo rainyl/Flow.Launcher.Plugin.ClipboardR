@@ -17,9 +17,11 @@ Ported to Flow.Launcher: [Flow.Launcher.Plugin.ClipboardHistory](https://github.
 ## Features
 
 - Preview panel, support images
-- Copy & delete record
+- Copy & delete & pin record
 - Cache images supported
 - Manually save images
+- Persistent & Keep time settings
+- Clear records in memory only or clear database
 
 ## Installation
 
@@ -43,11 +45,17 @@ Click `Copy` or directly the `search result` to copy the current data to clipboa
 
 If you want to save images in your clipboard, open the `CacheImages` option in settings.
 
-![settings](https://raw.githubusercontent.com/rainyl/Flow.Launcher.Plugin.ClipboardR/master/Images/settings.png)
+Note: It is recommended to cache images using `CacheImages` option, saving large images
+via `KeepImage` to database may block query for a little while.
+
+![settings1](./images/settings1.png)
+![settings2](./images/settings2.png)
 
 ## Todo List
 
 - [x] Save images manually
+- [x] Persistent
+- [x] Keep time
 - [ ] Word Count
 - [ ] Cached images format definition
 - [ ] Image OCR
