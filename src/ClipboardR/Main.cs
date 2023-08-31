@@ -14,7 +14,6 @@ using WindowsInput;
 using ClipboardR.Core;
 using ClipboardR.Panels;
 using Material.Icons;
-using Material.Icons.WPF;
 
 namespace ClipboardR;
 
@@ -46,12 +45,14 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
 
     private PluginInitContext _context = null!;
     private LinkedList<ClipboardData> _dataList = new();
+    public string RequeryString { get; private set; }
 
     public void Init(PluginInitContext ctx)
     {
         this._context = ctx;
         _context.API.LogDebug(ClassName, "Adding clipboard listener");
         this._clipboard.ClipboardChanged += _OnClipboardChange;
+        RequeryString = _context.CurrentPluginMetadata.ActionKeyword;
 
         ClipDir = new DirectoryInfo(ctx.CurrentPluginMetadata.PluginDirectory);
         var imageCacheDirectoryPath = Path.Combine(ClipDir.FullName, "CachedImages");
@@ -169,10 +170,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                 Score = 1,
                 Action = _ =>
                 {
-                    _context.API.ChangeQuery(
-                        _context.CurrentPluginMetadata.ActionKeyword + " clear ",
-                        true
-                    );
+                    _context.API.ChangeQuery(RequeryString + " clear ", true);
                     return false;
                 },
             }
@@ -214,7 +212,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                     VirtualKeyCode.CONTROL,
                     VirtualKeyCode.VK_V
                 );
-                _context.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
+                _context.API.ChangeQuery(RequeryString, true);
                 return true;
             },
         };
@@ -332,14 +330,14 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
     {
         _dataList.Remove(clipboardData);
         System.Windows.Forms.Clipboard.SetDataObject(clipboardData.Data);
-        _context.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
+        _context.API.ChangeQuery(RequeryString, true);
     }
 
     public void RemoveFromDatalist(ClipboardData clipboardData)
     {
         _dataList.Remove(clipboardData);
         _dbHelper.DeleteOneRecord(clipboardData);
-        _context.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
+        _context.API.ChangeQuery(RequeryString, true);
     }
 
     public void PinOneRecord(ClipboardData c)
@@ -351,7 +349,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                 : GetDefaultIcon(c);
         _dataList.AddLast(c);
         _dbHelper.PinOneRecord(c);
-        _context.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
+        _context.API.ChangeQuery(RequeryString, true);
     }
 
     public BitmapImage GetDefaultIcon(ClipboardData data)

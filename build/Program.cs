@@ -116,7 +116,6 @@ public class PublishTask : FrostingTask<BuildContext>
             @"Clipboar.+\.dll|"
             + @".+\.png|"
             + @"Dapper\.dll|Svg\.dll|Material\.Icons\.dll|"
-            + @"Material.Icons.WPF\.dll|"
             + @"ExCSS\.dll|"
             + @"plugin\.json|H\.InputSimulator\.dll|"
             + @"SQLitePCLRaw.+\.dll|Microsoft.+(S|s)qlite\.dll";
