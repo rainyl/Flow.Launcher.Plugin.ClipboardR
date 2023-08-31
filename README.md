@@ -22,6 +22,7 @@ Ported to Flow.Launcher: [Flow.Launcher.Plugin.ClipboardHistory](https://github.
 - Manually save images
 - Persistent & Keep time settings
 - Clear records in memory only or clear database
+- Words count
 
 ## Installation
 
@@ -56,7 +57,7 @@ via `KeepImage` to database may block query for a little while.
 - [x] Save images manually
 - [x] Persistent
 - [x] Keep time
-- [ ] Word Count
+- [x] Word Count
 - [ ] Cached images format definition
 - [ ] Image OCR
 
