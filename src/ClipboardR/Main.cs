@@ -214,6 +214,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                     VirtualKeyCode.CONTROL,
                     VirtualKeyCode.VK_V
                 );
+                _context.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
                 return true;
             },
         };

@@ -20,6 +20,8 @@ public partial class PreviewPanel : UserControl
     private Action<ClipboardData> CopyRecord { get; set; }
     private Action<ClipboardData> PinRecord { get; set; }
     private int OldScore { get; set; }
+    private bool Ready { get; set; } = false;
+    private const string WordsCountPrefix = "Words Count: ";
 
     public PreviewPanel(
         ClipboardData clipboardData,
@@ -41,6 +43,7 @@ public partial class PreviewPanel : UserControl
 
         SetContent();
         SetBtnIcon();
+        Ready = true;
     }
 
     public void SetContent()
@@ -72,6 +75,7 @@ public partial class PreviewPanel : UserControl
     {
         TxtBoxPre.Clear();
         TxtBoxPre.Text = string.IsNullOrWhiteSpace(s) ? _clipboardData.Text : s;
+        TextBlockWordCount.Text = WordsCountPrefix + TxtBoxPre.Text.Length;
     }
 
     public void SetImage()
@@ -84,6 +88,9 @@ public partial class PreviewPanel : UserControl
 
     private void BtnCopy_Click(object sender, System.Windows.RoutedEventArgs e)
     {
+        // if textbox is visible, it means the record is a text ot files, change the data to text
+        if (TxtBoxPre.IsVisible)
+            _clipboardData.Data = TxtBoxPre.Text;
         CopyRecord?.Invoke(_clipboardData);
     }
 
@@ -103,7 +110,11 @@ public partial class PreviewPanel : UserControl
         tb.Dispatcher.BeginInvoke(new Action(() => tb.SelectAll()));
     }
 
-    private void TxtBoxPre_TextChanged(object sender, TextChangedEventArgs e) { }
+    private void TxtBoxPre_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (Ready)
+            TextBlockWordCount.Text = WordsCountPrefix + TxtBoxPre.Text.Length;
+    }
 
     private void BtnPin_Click(object sender, RoutedEventArgs e)
     {
