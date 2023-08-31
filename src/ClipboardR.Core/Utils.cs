@@ -1,4 +1,7 @@
-﻿namespace ClipboardR.Core;
+﻿using System.Text;
+using System.Text.RegularExpressions;
+
+namespace ClipboardR.Core;
 
 public static class Utils
 {
@@ -10,6 +13,26 @@ public static class Utils
         return new string(
             Enumerable.Repeat(chars, length).Select(s => s[_random.Next(s.Length)]).ToArray()
         );
+    }
+
+    public static int CountWords(string s)
+    {
+        return CountWordsCn(s) + CountWordsEn(s);
+    }
+
+    public static int CountWordsCn(string s)
+    {
+        var nCn = (Encoding.UTF8.GetByteCount(s) - s.Length) / 2;
+        // var nCn = s.ToCharArray().Count(c => c >= 0x4E00 && c <= 0x9FFF);
+        return nCn;
+    }
+
+    public static int CountWordsEn(string s)
+    {
+        // // TODO: count more reasonable
+        s = string.Join("", s.Where(c => c < 0x4E00));
+        var collection = Regex.Matches(s, @"[\S]+");
+        return collection.Count;
     }
 
     public static string GetGuid()

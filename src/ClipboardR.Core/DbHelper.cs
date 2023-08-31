@@ -13,34 +13,34 @@ public class DbHelper
     private string SqlCheckTableRecord = "SELECT name from sqlite_master WHERE name='record'";
 
     private string SqlCreateDb = """
-        CREATE TABLE assets (
-            id	INTEGER NOT NULL UNIQUE,
-            data_b64	TEXT,
-            md5 TEXT UNIQUE ,
-            PRIMARY KEY("id" AUTOINCREMENT)
-        );
+                                 CREATE TABLE assets (
+                                     id	INTEGER NOT NULL UNIQUE,
+                                     data_b64	TEXT,
+                                     md5 TEXT UNIQUE ,
+                                     PRIMARY KEY("id" AUTOINCREMENT)
+                                 );
 
-        CREATE TABLE "record" (
-            "id"	INTEGER NOT NULL UNIQUE,
-            "hash_id"	TEXT UNIQUE,
-            "data_md5"	TEXT,
-            "text"	TEXT,
-            "display_title"	TEXT,
-            "senderapp"	TEXT,
-            "icon_path"	TEXT,
-            "icon_md5"	TEXT,
-            "preview_image_path"	TEXT,
-            "content_type"	INTEGER,
-            "score"	INTEGER,
-            "init_score"	INTEGER,
-            "time"	TEXT,
-            "create_time"	TEXT,
-            "pined"	INTEGER,
-            PRIMARY KEY("id" AUTOINCREMENT),
-            FOREIGN KEY("icon_md5") REFERENCES "assets"("md5"),
-            FOREIGN KEY("data_md5") REFERENCES "assets"("md5") ON DELETE CASCADE
-        );
-        """;
+                                 CREATE TABLE "record" (
+                                     "id"	INTEGER NOT NULL UNIQUE,
+                                     "hash_id"	TEXT UNIQUE,
+                                     "data_md5"	TEXT,
+                                     "text"	TEXT,
+                                     "display_title"	TEXT,
+                                     "senderapp"	TEXT,
+                                     "icon_path"	TEXT,
+                                     "icon_md5"	TEXT,
+                                     "preview_image_path"	TEXT,
+                                     "content_type"	INTEGER,
+                                     "score"	INTEGER,
+                                     "init_score"	INTEGER,
+                                     "time"	TEXT,
+                                     "create_time"	TEXT,
+                                     "pined"	INTEGER,
+                                     PRIMARY KEY("id" AUTOINCREMENT),
+                                     FOREIGN KEY("icon_md5") REFERENCES "assets"("md5"),
+                                     FOREIGN KEY("data_md5") REFERENCES "assets"("md5") ON DELETE CASCADE
+                                 );
+                                 """;
 
     public DbHelper(SqliteConnection connection)
     {
@@ -131,6 +131,7 @@ public class DbHelper
             sql = "PRAGMA foreign_keys = ON; DELETE FROM assets WHERE md5=@DataMd5;";
             await Connection.ExecuteAsync(sql, new { DataMd5 = dataMd5 });
         }
+
         CloseIfNotKeep();
     }
 
@@ -141,12 +142,27 @@ public class DbHelper
         CreateDb();
     }
 
-    public async void PinOneRecord(ClipboardData clipboardData)
+    public async void PinOneRecord(ClipboardData data)
     {
-        var sql = "UPDATE record SET pined=@Pin WHERE hash_id=@HashId";
+        var sql = "INSERT OR IGNORE INTO assets(data_b64, md5) VALUES (@DataB64, @Md5);";
+        var iconB64 = data.Icon.ToBase64();
+        var iconMd5 = iconB64.GetMd5();
+        var rows = await Connection.ExecuteAsync(
+            sql,
+            new List<Assets>
+            {
+                new() { DataB64 = iconB64, Md5 = iconMd5 },
+            }
+        );
+        sql = "UPDATE record SET pined=@Pin, icon_md5=@IconMd5 WHERE hash_id=@HashId";
         await Connection.ExecuteAsync(
             sql,
-            new { Pin = clipboardData.Pined, HashId = clipboardData.HashId }
+            new
+            {
+                Pin = data.Pined,
+                HashId = data.HashId,
+                IconMd5 = iconMd5
+            }
         );
         CloseIfNotKeep();
     }
@@ -154,15 +170,15 @@ public class DbHelper
     public async Task<LinkedList<ClipboardData>> GetAllRecord()
     {
         var sql = """
-            SELECT r.id as Id, a.data_b64 as DataMd5, r.text as Text, r.display_title as DisplayTitle, 
-                   r.senderapp as SenderApp, r.icon_path as IconPath, b.data_b64 as IconMd5, 
-                   r.preview_image_path as PreviewImagePath, r.content_type as ContentType,
-                   r.score as Score, r.init_score as InitScore, r.time as Time,
-                   r.create_time as CreateTime, r.pined as Pined, r.hash_id as HashId
-                 FROM record r
-                 LEFT JOIN assets a ON r.data_md5=a.md5
-                 LEFT JOIN assets b ON r.icon_md5=b.md5;
-            """;
+                  SELECT r.id as Id, a.data_b64 as DataMd5, r.text as Text, r.display_title as DisplayTitle,
+                         r.senderapp as SenderApp, r.icon_path as IconPath, b.data_b64 as IconMd5,
+                         r.preview_image_path as PreviewImagePath, r.content_type as ContentType,
+                         r.score as Score, r.init_score as InitScore, r.time as Time,
+                         r.create_time as CreateTime, r.pined as Pined, r.hash_id as HashId
+                       FROM record r
+                       LEFT JOIN assets a ON r.data_md5=a.md5
+                       LEFT JOIN assets b ON r.icon_md5=b.md5;
+                  """;
         var results = await Connection.QueryAsync<Record>(sql);
         LinkedList<ClipboardData> allRecord = new(results.Select(Record.ToClipboardData));
         CloseIfNotKeep();
@@ -172,10 +188,10 @@ public class DbHelper
     public async void DeleteRecordByKeepTime(int contentType, int keepTime)
     {
         var sql = """
-            DELETE FROM record
-                WHERE strftime('%s', 'now') - strftime('%s', create_time) > @KeepTime*3600
-                AND content_type=@ContentType;
-            """;
+                  DELETE FROM record
+                      WHERE strftime('%s', 'now') - strftime('%s', create_time) > @KeepTime*3600
+                      AND content_type=@ContentType;
+                  """;
         var r = await Connection.ExecuteAsync(
             sql,
             new { KeepTime = keepTime, ContentType = contentType }
@@ -227,17 +243,21 @@ public class Record
     public int Score { get; set; }
     public int InitScore { get; set; }
     public DateTime _time;
+
     public string Time
     {
         get => _time.ToString("O");
         set => _time = DateTime.Parse(value);
     }
+
     public DateTime _create_time;
+
     public string CreateTime
     {
         get => _create_time.ToString("O");
         set => _create_time = DateTime.Parse(value);
     }
+
     public bool Pined { get; set; }
 
     public static Record FromClipboardData(ClipboardData data)

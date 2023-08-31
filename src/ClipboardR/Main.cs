@@ -249,9 +249,6 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
         {
             case CbContentType.Text:
                 clipboardData.Text = _clipboard.ClipboardText;
-                clipboardData.Icon = MaterialIconKind.Text.ToBitmapImage(
-                    fillColor: _settings.IconColor
-                );
                 _context.API.LogDebug(ClassName, "Processed text change");
                 break;
             case CbContentType.Image:
@@ -267,9 +264,6 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                 var t = _clipboard.ClipboardFiles.ToArray();
                 clipboardData.Data = t;
                 clipboardData.Text = string.Join("\n", t.Take(2)) + "\n...";
-                clipboardData.Icon = MaterialIconKind.FileMultiple.ToBitmapImage(
-                    _settings.IconColor
-                );
                 _context.API.LogDebug(ClassName, "Processed file change");
                 break;
             case CbContentType.Other:
@@ -280,6 +274,7 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
                 break;
         }
 
+        clipboardData.Icon = GetDefaultIcon(clipboardData);
         clipboardData.DisplayTitle = Regex.Replace(clipboardData.Text.Trim(), @"(\r|\n|\t|\v)", "");
 
         // make sure no repeat
@@ -353,11 +348,23 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
         if (c.Type is CbContentType.Text or CbContentType.Files)
             c.Icon = c.Pined
                 ? new BitmapImage(new Uri(_defaultPinIconPath, UriKind.RelativeOrAbsolute))
-                : new BitmapImage(new Uri(_defaultIconPath, UriKind.RelativeOrAbsolute));
+                : GetDefaultIcon(c);
         _dataList.AddLast(c);
-        _context.API.ShowMsg($"{c.Pined}, hash: {c.HashId}");
         _dbHelper.PinOneRecord(c);
         _context.API.ChangeQuery(_context.CurrentPluginMetadata.ActionKeyword, true);
+    }
+
+    public BitmapImage GetDefaultIcon(ClipboardData data)
+    {
+        return data.Type switch
+        {
+            CbContentType.Text
+                => MaterialIconKind.Text.ToBitmapImage(fillColor: _settings.IconColor),
+            CbContentType.Files
+                => MaterialIconKind.FileMultiple.ToBitmapImage(fillColor: _settings.IconColor),
+            CbContentType.Image => data.Icon,
+            _ => throw new NotImplementedException()
+        };
     }
 
     public int GetNewScoreByOrderBy(ClipboardData clipboardData)

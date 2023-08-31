@@ -118,8 +118,8 @@ public partial class SettingsPanel
     /// </summary>
     public SettingsPanel()
     {
-        // this.settings = new Settings(){ConfigFile = "test.json"};
-        // settings.Save();
+        this.settings = new Settings() { ConfigFile = "test.json" };
+        settings.Save();
         settings = Settings.Load("test.json");
         _context = null;
         InitializeComponent();

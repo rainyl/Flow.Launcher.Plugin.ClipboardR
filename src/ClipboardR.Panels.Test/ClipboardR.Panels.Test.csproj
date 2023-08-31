@@ -11,4 +11,8 @@
       <ProjectReference Include="..\ClipboardR.Panels\ClipboardR.Panels.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Material.Icons.WPF" Version="2.0.0" />
+    </ItemGroup>
+
 </Project>

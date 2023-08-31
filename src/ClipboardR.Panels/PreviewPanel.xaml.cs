@@ -4,9 +4,11 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Flow.Launcher.Plugin;
 using ClipboardR.Core;
+using Material.Icons;
 using Image = System.Drawing.Image;
 
 namespace ClipboardR.Panels;
@@ -22,6 +24,21 @@ public partial class PreviewPanel : UserControl
     private int OldScore { get; set; }
     private bool Ready { get; set; } = false;
     private const string WordsCountPrefix = "Words Count: ";
+    public string IconColor { get; set; } = CbColors.Blue500;
+    public string PathCopy { get; set; } =
+        MaterialIconDataProvider.GetData(MaterialIconKind.ContentCopy);
+    public string PathPin { get; set; } = MaterialIconDataProvider.GetData(MaterialIconKind.Pin);
+    public string PathPinOff { get; set; } =
+        MaterialIconDataProvider.GetData(MaterialIconKind.PinOff);
+    public string PathDelete { get; set; } =
+        MaterialIconDataProvider.GetData(MaterialIconKind.DeleteForever);
+    public string PathSave { get; set; } = MaterialIconDataProvider.GetData(MaterialIconKind.File);
+
+    public PreviewPanel()
+    {
+        InitializeComponent();
+        Ready = true;
+    }
 
     public PreviewPanel(
         ClipboardData clipboardData,
@@ -29,7 +46,8 @@ public partial class PreviewPanel : UserControl
         DirectoryInfo cacheDir,
         Action<ClipboardData> delAction,
         Action<ClipboardData> copyAction,
-        Action<ClipboardData> pinAction
+        Action<ClipboardData> pinAction,
+        string iconColor = CbColors.Blue500
     )
     {
         _clipboardData = clipboardData;
@@ -39,6 +57,7 @@ public partial class PreviewPanel : UserControl
         CopyRecord = copyAction;
         PinRecord = pinAction;
         OldScore = clipboardData.Score;
+        IconColor = iconColor;
         InitializeComponent();
 
         SetContent();
@@ -75,7 +94,7 @@ public partial class PreviewPanel : UserControl
     {
         TxtBoxPre.Clear();
         TxtBoxPre.Text = string.IsNullOrWhiteSpace(s) ? _clipboardData.Text : s;
-        TextBlockWordCount.Text = WordsCountPrefix + TxtBoxPre.Text.Length;
+        TextBlockWordCount.Text = WordsCountPrefix + Utils.CountWords(TxtBoxPre.Text);
     }
 
     public void SetImage()
@@ -101,7 +120,7 @@ public partial class PreviewPanel : UserControl
 
     private void SetBtnIcon()
     {
-        BtnPin.Content = FindResource(_clipboardData.Pined ? "PinedIcon" : "PinIcon");
+        BtnPin.Content = FindResource(_clipboardData.Pined ? "PathPinOff" : "PathPin");
     }
 
     private void TxtBoxPre_GotFocus(object sender, System.Windows.RoutedEventArgs e)

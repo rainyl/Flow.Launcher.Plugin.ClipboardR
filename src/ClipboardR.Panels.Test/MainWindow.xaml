@@ -8,9 +8,15 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <panels:SettingsPanel
-            x:Name="SettingsPanel"
-            />
-
+        <TabControl
+            SelectedIndex="1">
+            <TabItem Header="Settings">
+                <panels:SettingsPanel
+                    x:Name="SettingsPanel" />
+            </TabItem>
+            <TabItem Header="Preview">
+                <panels:PreviewPanel />
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>
