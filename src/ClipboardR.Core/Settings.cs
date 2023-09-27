@@ -24,6 +24,7 @@ public class Settings
 
     // TODO: add this in settings panel
     public string ClearKeyword { get; set; } = "clear";
+    public string ImageFormat { get; set; } = "yyyy-MM-dd-hhmmss-{app}";
     public string IconColor { get; set; } = CbColors.Blue500;
 
     public void Save()

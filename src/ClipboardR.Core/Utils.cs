@@ -40,11 +40,25 @@ public static class Utils
         return Guid.NewGuid().ToString("D");
     }
 
-    public static string? SaveImageCache(ClipboardData clipboardData, DirectoryInfo clipCacheDir)
+    public static string FormatImageName(string format, DateTime dateTime, string appname = "")
+    {
+        if (format.Contains("{app}"))
+        {
+            format = format.Replace("{app}", "");
+        }
+        else
+        {
+            appname = "";
+        }
+        var imageName = dateTime.ToString(format) + appname;
+        return imageName;
+    }
+    
+    public static string? SaveImageCache(ClipboardData clipboardData, DirectoryInfo clipCacheDir, string? name=null)
     {
         if (clipboardData.Data is not Image img)
             return null;
-        var name = RandomString(10);
+        name = string.IsNullOrWhiteSpace(name) ? RandomString(10): name;
         var path = Path.Join(clipCacheDir.FullName, $"{name}.png");
 
         img.Save(path);
@@ -91,6 +105,7 @@ public static class Retry
 
 public static class CmBoxIndexMapper
 {
+    // ComBox index to keep time mapper 
     private static readonly Dictionary<int, int> KeepTimeDict =
         new(
             new List<KeyValuePair<int, int>>()

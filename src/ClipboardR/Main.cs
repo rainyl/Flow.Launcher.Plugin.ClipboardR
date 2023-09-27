@@ -17,7 +17,7 @@ using Material.Icons;
 
 namespace ClipboardR;
 
-public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
+public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable, IReloadable
 {
     // clipboard listener instance
     private CbMonitor _clipboard = new() { ObserveLastEntry = false };
@@ -252,7 +252,11 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
             case CbContentType.Image:
                 clipboardData.Text = $"Image:{clipboardData.Time:yy-MM-dd-HH:mm:ss}";
                 if (_settings.CacheImages)
-                    Utils.SaveImageCache(clipboardData, ClipCacheDir);
+                {
+                    var imageName = Utils.FormatImageName(_settings.ImageFormat, clipboardData.CreateTime,
+                        clipboardData.SenderApp ?? "");
+                    Utils.SaveImageCache(clipboardData, ClipCacheDir, imageName);
+                }
                 var img = _clipboard.ClipboardImage;
                 if (img != null)
                     clipboardData.Icon = img.ToBitmapImage();
@@ -299,8 +303,9 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
         return new SettingsPanel(_settings, _context);
     }
 
-    public void Dispose()
+    public void ReloadData()
     {
+        Save();
         try
         {
             // Delete expired records
@@ -312,18 +317,26 @@ public class ClipboardR : IPlugin, IDisposable, ISettingProvider, ISavable
             };
             foreach (var pair in kv)
             {
+                _context.API.LogInfo(ClassName, $"{pair.Item1}, {pair.Item2}, {CmBoxIndexMapper.ToKeepTime(pair.Item2)}");
                 _dbHelper?.DeleteRecordByKeepTime(
                     (int)pair.Item1,
                     CmBoxIndexMapper.ToKeepTime(pair.Item2)
                 );
             }
-
-            _dbHelper?.Close();
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            // ignore
+            _context.API.LogWarn(ClassName, $"Clear expired data failed!\n{e}");
         }
+        
+        RestoreRecordsFromDb();
+    }
+    
+    public void Dispose()
+    {
+        _context.API.LogWarn(ClassName, $"enter dispose");
+        ReloadData();
+        _dbHelper?.Close();
     }
 
     public void CopyToClipboard(ClipboardData clipboardData)

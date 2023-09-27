@@ -13,13 +13,31 @@ public partial class SettingsPanel
     public Settings settings { get; set; }
     private PluginInitContext? _context { get; set; }
     private bool Ready { get; set; } = false;
+    
 
+    public static readonly DependencyProperty ImageFormatStringProperty = DependencyProperty.Register(
+        nameof(ImageFormatString), typeof(string), typeof(SettingsPanel), new PropertyMetadata(default(string)));
+
+    public string ImageFormatString
+    {
+        get { return (string)GetValue(ImageFormatStringProperty); }
+        set { SetValue(ImageFormatStringProperty, value); }
+    }
     public static readonly DependencyProperty MaxDataCountProperty = DependencyProperty.Register(
         nameof(MaxDataCount),
         typeof(int),
         typeof(SettingsPanel),
         new PropertyMetadata(default(int))
     );
+
+    public static readonly DependencyProperty ImageFormatPreviewProperty = DependencyProperty.Register(
+        nameof(ImageFormatPreview), typeof(string), typeof(SettingsPanel), new PropertyMetadata(default(string)));
+
+    public string ImageFormatPreview
+    {
+        get { return (string)GetValue(ImageFormatPreviewProperty); }
+        set { SetValue(ImageFormatPreviewProperty, value); }
+    }
 
     public int MaxDataCount
     {
@@ -110,6 +128,8 @@ public partial class SettingsPanel
         KeepTextHours = settings.KeepTextHours;
         KeepImageHours = settings.KeepImageHours;
         KeepFileHours = settings.KeepFileHours;
+        ImageFormatString = settings.ImageFormat;
+        ImageFormatPreview = Utils.FormatImageName(ImageFormatString, DateTime.Now, "TestApp.exe");
     }
 
     /// <summary>
@@ -138,9 +158,11 @@ public partial class SettingsPanel
             settings.CacheImages = c.IsChecked ?? false;
     }
 
-    private void BtnRestartFlow_OnClick(object sender, RoutedEventArgs e)
+    private void BtnApplySettings_OnClick(object sender, RoutedEventArgs e)
     {
-        _context?.API.RestartApp();
+        // _context?.API.RestartApp();
+        _context?.API.SavePluginSettings();
+        _context?.API.ReloadAllPluginData();
     }
 
     private void SpinBoxMaxRec_OnValueChanged(int v)
@@ -211,5 +233,47 @@ public partial class SettingsPanel
         if (!success)
             return uint.MaxValue;
         return v == 0 ? uint.MaxValue : v;
+    }
+
+    private void TextBoxImageFormat_OnTextChanged(object sender, TextChangedEventArgs e)
+    {
+        ImageFormatString = TextBoxImageFormat.Text;
+        settings.ImageFormat = ImageFormatString;
+        ImageFormatPreview = Utils.FormatImageName(ImageFormatString, DateTime.Now, "TestApp.exe");
+    }
+
+    private void ButtonYear_OnClick(object sender, RoutedEventArgs e)
+    {
+        TextBoxImageFormat.Text += "yyyy";
+    }
+
+    private void ButtonMonth_OnClick(object sender, RoutedEventArgs e)
+    {
+        TextBoxImageFormat.Text += "MM";
+    }
+
+    private void ButtonDay_OnClick(object sender, RoutedEventArgs e)
+    {
+        TextBoxImageFormat.Text += "dd";
+    }
+
+    private void ButtonHour_OnClick(object sender, RoutedEventArgs e)
+    {
+        TextBoxImageFormat.Text += "hh";
+    }
+
+    private void ButtonMinute_OnClick(object sender, RoutedEventArgs e)
+    {
+        TextBoxImageFormat.Text += "mm";
+    }
+
+    private void ButtonSecond_OnClick(object sender, RoutedEventArgs e)
+    {
+        TextBoxImageFormat.Text += "ss";
+    }
+
+    private void ButtonAppName_OnClick(object sender, RoutedEventArgs e)
+    {
+        TextBoxImageFormat.Text += "{app}";
     }
 }
