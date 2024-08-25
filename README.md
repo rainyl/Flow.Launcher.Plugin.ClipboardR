@@ -1,3 +1,19 @@
+# Archived            
+
+Flow.launcher is awesome but I only need `everything` and `clipboard manager`, however the plugin `Clipboard History` didn't update for a long time and the support of image was lost, that's why I started this project.
+
+However, developing plugins for `Flow.Launcher` via `C#` is kind of painful, until 2024.8.25, they still doesn't support change log level https://github.com/Flow-Launcher/Flow.Launcher/issues/2317 , which means I have to `1. build the plugin 2. copy to plugin directory 3. restart Flow` AND use system toast to show debug messages every time the source code was changed, so finally I lost my passion on it.
+
+And the most importantly, I haven't use Flow for a long time ([EverythingToolbar](https://github.com/srwi/EverythingToolbar) and [ditto](https://github.com/sabrogden/Ditto) are great alternatives), that's why I didn't reply all the issues, my apologize.
+
+Finally, I dicide to archive this repo, feel free to use my code in further development, that's the beauty of open source, just remember to refer to this repo. For those who want to get update, check [ClipboardPlus](https://github.com/Jack251970/Flow.Launcher.Plugin.ClipboardPlus), which is developed based on this plugin and you can switch to it easily. (I have noticed that it is 200+ commits ahead of my repo, plugin development for Flow is really not convenient enough ☹️)
+
+Also, thanks for all your support! Bye.   
+
+Best wishes.  
+Rainyl
+2024.8.25
+
 # Flow Launcher Clipboard Plugin
 
 The Clipboard plugin for [Flow.Launcher](https://github.com/Flow-Launcher/Flow.Launcher)
